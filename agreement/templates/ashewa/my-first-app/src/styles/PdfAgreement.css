@@ -1,0 +1,284 @@
+/* Better CSS for the PdfAgreement Component */
+
+/*--------------------
+  Theme Variables
+--------------------*/
+:root {
+  --primary-color: #007bff;
+  --primary-hover-color: #0056b3;
+  --secondary-color: #6c757d;
+  --secondary-hover-color: #5a6268;
+  --edit-color: #ffc107;
+  --edit-hover-color: #e0a800;
+  --delete-color: #dc3545;
+  --delete-hover-color: #c82333;
+  --background-light: #f6f6faff;
+  --background-card: #ffffffff;
+  --border-color: #e0e0e0;
+  --text-dark: #333333;
+  --text-medium: #555555;
+  --text-light: #666666;
+  --border-radius: 8px;
+  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --transition-speed: 0.2s ease-in-out;
+
+  /* New color variables for the buttons from the image */
+  --button-border-color: #4c79adff;
+  --add-color: #007bff;
+  --edit-text-color: #ffb700;
+  --delete-text-color: #ff6a6a;
+  --view-text-color: #3e73a0;
+  --upload-color: #39914eff;
+  --upload-hover-color: #218838;
+  --cancel-text-color: #2b2e31ff;
+}
+
+/*--------------------
+  Base Styles
+--------------------*/
+.pdf-agreement-page {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: var(--background-light);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  color: var(--text-dark);
+  font-size: 0.9rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-top: 0;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  text-align: center;
+}
+
+/*--------------------
+  Layout Containers
+--------------------*/
+.upload-container, .list-container {
+  padding: 40px;
+  background-color: var(--background-card);
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.top-section {
+  margin-bottom: 20px;
+}
+
+.list-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 25px;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/*--------------------
+  Form Elements
+--------------------*/
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text-medium);
+}
+
+.form-group input[type="text"],
+.form-group input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-sizing: border-box;
+  font-size: 1rem;
+  transition: border-color var(--transition-speed);
+}
+
+/* Focused state for form inputs */
+.form-group input[type="text"]:focus,
+.form-group input[type="file"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/*--------------------
+  Buttons
+--------------------*/
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+  justify-content: flex-end;
+  margin-left: 100px;
+}
+
+/* General button styles, updated for pill shape and layout */
+.btn-secondary, .btn-edit, .btn-delete, .btn-back {
+  height: 35px;
+  border-radius: 17.5px;
+  padding: 0 12px;
+  border: 1px solid var(--button-border-color);
+  background-color: var(--background-card);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: none;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  text-decoration: none;
+}
+
+/* Upload Button (Updated to match edit/delete style) */
+.btn-primary.upload-btn {
+  background-color: var(--upload-color);
+  color: white;
+  border: 1px solid var(--upload-color);
+}
+.btn-primary.upload-btn:hover {
+  background-color: var(--upload-hover-color);
+  box-shadow: 0 2px 5px rgba(40, 167, 69, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Cancel Button (Updated to match edit/delete style) */
+.btn-secondary.cancel-btn {
+  color: var(--cancel-text-color);
+  background-color: var(--background-card);
+  border: 1px solid var(--button-border-color);
+}
+.btn-secondary.cancel-btn:hover {
+  background-color: #f1f1f1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(108, 117, 125, 0.1);
+}
+
+/* Back Button */
+.btn-back {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.btn-back:hover {
+  background-color: var(--secondary-hover-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* "Add New" Button (Modified) */
+.list-header .btn-primary {
+  color: white;
+  border-color: var(--add-color);
+  font-weight: bold;
+  width: auto;
+}
+
+.list-header .btn-primary:hover {
+  background-color: var(--add-color);
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Edit and Delete buttons (Modified) */
+.btn-edit, .btn-delete {
+  background-color: white;
+  border: 1px solid #c4e0ff;
+  padding: 0 12px;
+  width: auto;
+  border-radius: 17.5px;
+}
+
+.btn-edit {
+  color: #707174ff;
+}
+
+.btn-edit:hover {
+  background-color: #fcf8e3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(255,193,7,0.2);
+}
+
+.btn-delete {
+  color: var(--delete-text-color);
+}
+
+.btn-delete:hover {
+  background-color: #f8d7da;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(220,53,69,0.2);
+}
+
+/*--------------------
+  List Styles
+--------------------*/
+.agreement-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.agreement-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: 12px;
+  background-color: var(--background-card);
+  transition: box-shadow var(--transition-speed), background-color var(--transition-speed);
+  cursor: pointer;
+}
+
+.agreement-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  background-color: #fcfcfc;
+}
+
+.agreement-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-dark);
+  flex-grow: 1;
+  margin-right: 3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+p {
+  text-align: center;
+  color: var(--text-light);
+  font-style: italic;
+  margin-top: 30px;
+}

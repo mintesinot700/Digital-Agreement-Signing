@@ -1,0 +1,469 @@
+body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            background: linear-gradient(to right, #f7f9fc, #e0e8f0); /* Soft background gradient */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Ensure it takes full viewport height */
+            margin: 0;
+            padding: 20px; /* Consistent padding */
+            box-sizing: border-box;
+        }
+
+        /* Overall Container for the Two-Panel Layout */
+        .auth-container {
+            display: flex;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            max-width: 1600px; /* Significantly increased width for maximum horizontal space usage */
+            width: 90%; /* Use a high percentage to be very flexible */
+            margin: 50px auto; /* Increased overall margin for more breathing room */
+            overflow: hidden;
+            min-height: 380px; /* Kept short as requested */
+            background-color: #fff;
+        }
+
+        /* Left Panel - Welcome Back! (Green/Teal Side) */
+        .auth-panel-left {
+            flex: 1; /* Divided equally: Changed from 1.2 to 1 */
+            background: linear-gradient(145deg, #4CAF50, #2E8B57);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px; /* Increased padding */
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Background shapes for the left panel - slightly smaller */
+        .auth-panel-left::before,
+        .auth-panel-left::after {
+            content: '';
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            filter: blur(12px);
+            opacity: 0.7;
+        }
+
+        .auth-panel-left::before {
+            width: 180px;
+            height: 180px;
+            top: -50px;
+            left: -50px;
+        }
+
+        .auth-panel-left::after {
+            width: 130px;
+            height: 130px;
+            bottom: -30px;
+            right: -30px;
+            transform: rotate(60deg);
+            border-radius: 10px;
+        }
+
+        .logo-placeholder {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .logo-placeholder svg {
+            filter: drop-shadow(0 1px 3px rgba(0,0,0,0.15));
+        }
+
+        .logo-placeholder span {
+            font-size: 1.2em !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px;
+        }
+
+
+        .auth-panel-left h2 {
+            font-size: 2.0em;
+            color: white;
+            margin-bottom: 10px;
+            font-weight: 700;
+            line-height: 1.2;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+
+        .auth-panel-left p {
+            color: white;
+            font-size: 0.9em;
+            margin-bottom: 25px;
+            line-height: 1.4;
+            max-width: 80%; /* Increased max-width to allow content to spread out more */
+        }
+
+        .panel-button {
+            background-color: white;
+            color: #2E8B57;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 25px;
+            font-size: 1.0em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .panel-button:hover {
+            background-color: #f0f4f8;
+            color: #1E6C42;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Right Panel - Create Account / Login Form (White Side) */
+        .auth-panel-right {
+            flex: 1; /* Divided equally: Changed from 1.5 to 1 */
+            background-color: white;
+            padding: 40px 60px; /* Increased left/right padding significantly */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            border-radius: 0 15px 15px 0;
+        }
+
+        /* Top-right rounded corner effect for the white panel */
+        .auth-panel-right::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            background-color: #f7f9fc;
+            border-bottom-left-radius: 15px;
+            box-shadow: -2px 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+
+        .auth-panel-right h1 {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        /* Social Media Icons */
+        .social-login {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2em;
+            color: #777;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .social-icon:hover {
+            background-color: #f0f4f8;
+            border-color: #b0b0b0;
+            color: #555;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Separator text "or use your email for registration:" */
+        .separator-text {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+            position: relative;
+            width: 90%;
+            text-align: center;
+        }
+
+        .separator-text::before,
+        .separator-text::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 25%;
+            height: 1px;
+            background-color: #e0e0e0;
+        }
+
+        .separator-text::before {
+            left: 0;
+        }
+
+        .separator-text::after {
+            right: 0;
+        }
+
+
+        /* Form Container within the Right Panel */
+        .form-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            box-shadow: none;
+            margin: 0;
+            max-width: none;
+        }
+
+        /* Style for the input labels */
+        .input-label {
+            align-self: flex-start; /* Align label to the start of the input group */
+            margin-bottom: 5px; /* Space between label and input */
+            color: #555;
+            font-size: 0.9em;
+            font-weight: 500;
+            padding-left: 5px; /* Small indent to align with input text */
+        }
+
+        /* Input Group for Icons + Input */
+        .input-group {
+            position: relative;
+            width: 95%; /* Increased width to truly fill more space */
+            margin: 8px 0; /* Slightly increased vertical margin for more breathing room */
+            display: flex; /* Make input group a flex container */
+            flex-direction: column; /* Stack label and input vertically */
+            align-items: flex-start; /* Align items to the start */
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px; /* Adjusted for larger padding */
+            top: calc(50% + 10px); /* Adjusted to align with input, considering label height */
+            transform: translateY(-50%);
+            color: #a0a0a0;
+            font-size: 1.0em;
+        }
+
+        /* Form Input Field */
+        .form-input {
+            width: 100%;
+            padding: 12px 15px 12px 45px; /* Increased padding for more space inside inputs */
+            border: 1px solid #e0e0e0; /* Added a subtle border */
+            border-radius: 7px;
+            background-color: white; /* Changed background to white */
+            box-sizing: border-box;
+            font-size: 0.95em;
+            color: #333;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+        }
+
+        .form-input::placeholder {
+            color: #c0c0c0;
+        }
+
+        .form-input:focus {
+            outline: none;
+            background-color: white;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.25), 0 1px 3px rgba(0, 0, 0, 0.08); /* Green glow and slightly more pronounced shadow */
+        }
+
+        /* Form Button (SIGN UP / SIGN IN) */
+        .form-button {
+            width: 95%; /* Increased width to match inputs */
+            padding: 12px 20px; /* Slightly increased padding */
+            margin-top: 25px; /* Increased margin */
+            background: linear-gradient(45deg, #4CAF50, #2E8B57);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.05em; /* Slightly larger font */
+            font-weight: 600;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.12);
+            letter-spacing: 0.8px; /* Slightly more spacing */
+            text-transform: uppercase;
+        }
+
+        .form-button:hover {
+            background: linear-gradient(45deg, #2E8B57, #4CAF50);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.18);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            background-color: #fdeded;
+            border: 1px solid #e74c3c;
+            border-radius: 8px;
+            padding: 8px 12px; /* Slightly increased padding */
+            margin-bottom: 15px; /* Slightly increased margin */
+            font-size: 0.9em; /* Slightly larger font */
+            text-align: center;
+            width: 95%; /* Increased width */
+            box-sizing: border-box;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading Indicator Styles */
+        .loading-indicator-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px; /* Increased margin */
+        }
+
+        .loading-spinner {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4CAF50;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) { /* Adjusted breakpoint for wider layout */
+            .auth-container {
+                max-width: 90%; /* Still flexible but scales down */
+                margin: 30px auto;
+            }
+            .auth-panel-left, .auth-panel-right {
+                padding: 30px 40px; /* Adjusted padding for medium screens */
+            }
+            .input-group, .form-button, .error-message {
+                width: 90%; /* Adjust width for inputs/buttons */
+            }
+        }
+
+        @media (max-width: 850px) { /* Stack panels vertically on smaller screens */
+            .auth-container {
+                flex-direction: column;
+                max-width: 450px; /* Single column width */
+                margin: 20px auto;
+                min-height: auto;
+                border-radius: 15px;
+            }
+
+            .auth-panel-left {
+                padding: 30px 25px;
+                border-radius: 15px 15px 0 0;
+                flex: none;
+                width: 100%;
+            }
+
+            .auth-panel-right {
+                padding: 30px 25px 30px 25px;
+                border-radius: 0 0 15px 15px;
+                flex: none;
+                width: 100%;
+            }
+
+            .auth-panel-right::before {
+                display: none; /* Hide the top-right cut-out on mobile */
+            }
+
+            .auth-panel-left h2 {
+                font-size: 1.8em;
+            }
+
+            .auth-panel-left p {
+                font-size: 0.9em;
+            }
+
+            .panel-button {
+                padding: 8px 20px;
+                font-size: 0.9em;
+            }
+
+            .auth-panel-right h1 {
+                font-size: 1.6em;
+            }
+
+            .social-login {
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            .social-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 1.1em;
+            }
+
+            .separator-text {
+                margin-bottom: 15px;
+                font-size: 0.8em;
+            }
+
+            .separator-text::before,
+            .separator-text::after {
+                width: 15%;
+            }
+
+            .input-group {
+                margin: 3px 0 3px;
+            }
+
+            .form-input {
+                padding: 8px 35px 8px 35px;
+                font-size: 0.9em;
+            }
+
+            .form-button {
+                padding: 8px 15px;
+                font-size: 0.9em;
+                margin-top: 15px;
+            }
+        }
+
+        /* Further smaller screen adjustments */
+        @media (max-width: 500px) {
+            .auth-panel-left {
+                padding: 20px 10px;
+            }
+            .auth-panel-left h2 {
+                font-size: 1.4em;
+            }
+            .auth-panel-left p {
+                font-size: 0.8em;
+            }
+            .auth-panel-right {
+                padding: 20px 10px;
+            }
+            .auth-panel-right h1 {
+                font-size: 1.4em;
+            }
+            .social-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 1.0em;
+            }
+            .form-input {
+                padding: 6px 6px 6px 30px;
+            }
+        }

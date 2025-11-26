@@ -1,0 +1,788 @@
+/* Custom Confirmation Modal */
+.custom-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+.custom-modal {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 400px;
+}
+.custom-modal-content p {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+.custom-modal-actions button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin: 0 0.5rem;
+    transition: background-color 0.2s ease;
+}
+.confirm-btn {
+    background-color: #f44336;
+    color: white;
+}
+.confirm-btn:hover {
+    background-color: #da190b;
+}
+.cancel-btn {
+    background-color: #ccc;
+    color: #333;
+}
+.cancel-btn:hover {
+    background-color: #bbb;
+}
+
+/* General Layout */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f7f9f7;
+    color: #333;
+}
+
+.admin-dashboard-layout {
+    display: flex;
+    flex-direction: column; /* Default to column for small screens */
+    min-height: 100vh;
+}
+
+/* New Horizontal Navigation Bar (Desktop/Tablet) */
+.admin-main-nav {
+    display: none; /* Hidden by default on mobile */
+    background-color: #fff;
+    padding: 10px 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-nav-header {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+.admin-nav-header .logo-main {
+    font-size: 1.5em;
+    font-weight: 800;
+    color: #4CAF50;
+}
+.admin-nav-header .logo-sub {
+    font-size: 0.8em;
+    color: #555;
+}
+
+.admin-nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+/* Mobile Sidebar & Menu */
+.mobile-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px; /* Hidden off-screen */
+    height: 100vh;
+    width: 280px;
+    background-color: #fff;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    padding: 30px 0;
+    z-index: 1000;
+    transition: left 0.3s ease-in-out;
+}
+
+.mobile-sidebar.open {
+    left: 0; /* Slides into view */
+}
+
+.mobile-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.sidebar-logo {
+    text-align: left;
+    padding: 0 20px;
+    margin-bottom: 30px;
+}
+.sidebar-logo .logo-main {
+    font-size: 1.5em;
+    font-weight: 800;
+    color: #4CAF50;
+}
+.sidebar-logo .logo-sub {
+    font-size: 0.8em;
+    color: #555;
+}
+
+.sidebar-section {
+    width: 100%;
+    margin-bottom: 25px;
+}
+
+.sidebar-section-title {
+    font-size: 0.8em;
+    color: #888;
+    text-transform: uppercase;
+    margin-left: 20px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.mobile-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Hamburger and Close Buttons */
+.hamburger-menu-btn {
+    display: block; /* Show by default on small screens */
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #333;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.close-menu-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #333;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+/* Navigation Items (Shared Styles) */
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    color: #555;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-left: 4px solid transparent;
+}
+.nav-item:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+.nav-item.active {
+    background-color: #e6f7e6;
+    color: #4CAF50;
+    font-weight: 600;
+    border-left: 4px solid #4CAF50;
+}
+.nav-icon {
+    margin-right: 15px;
+    font-size: 1em;
+    color: #777;
+}
+.nav-item.active .nav-icon {
+    color: #4CAF50;
+}
+
+/* Main Content Area */
+.main-content {
+    flex-grow: 1;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-header {
+    padding: 0;
+    margin-bottom: 30px;
+    background: transparent;
+    text-align: start;
+}
+
+.admin-header h1 {
+    margin: 0;
+    font-size: 1.5em;
+    color: #333;
+    font-weight: bold;
+}
+
+/* Admin Content Card and other styles */
+.admin-content-card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    flex-grow: 1;
+}
+
+.agreements-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.agreements-header-title h3 {
+    font-size: 1.3em;
+    margin: 0;
+    color: black;
+}
+
+.agreements-subheader-info {
+    font-size: 0.9em;
+    color: #888;
+}
+
+.error-message {
+    background-color: #f7e6e6;
+    color: #f44336;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+.table-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 5px 10px;
+    background-color: #fff;
+}
+
+.search-icon {
+    color: #999;
+    margin-right: 10px;
+}
+
+.search-input {
+    border: none;
+    flex-grow: 1;
+    font-size: 0.9em;
+    padding: 5px;
+    background: transparent;
+}
+
+.search-input:focus {
+    outline: none;
+}
+
+.sort-by-dropdown {
+    display: flex;
+    align-items: center;
+}
+
+.sort-by-dropdown span {
+    font-size: 0.9em;
+    color: #555;
+    margin-right: 10px;
+}
+
+.sort-by-dropdown select {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 8px 12px;
+    font-size: 0.9em;
+    background-color: #fff;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="%23888" d="M8 12L2 6h12z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+}
+
+.status-dropdown {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 8px 12px;
+    font-size: 0.9em;
+    background-color: #fff;
+    color: #333;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="%23888" d="M8 12L2 6h12z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+    cursor: pointer;
+    width: 120px;
+    position: relative;
+}
+
+.status-dropdown:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+.status-approved {
+    background-color: #e6f7e6;
+    color: #4CAF50;
+}
+.status-rejected {
+    background-color: #f7e6e6;
+    color: #f44336;
+}
+.status-pending {
+    background-color: #e3f2fd;
+    color: #2196F3;
+}
+.status-approved::after, .status-rejected::after, .status-pending::after {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9em;
+}
+.status-approved::after {
+    content: "✓";
+    color: #4CAF50;
+}
+.status-rejected::after {
+    content: "X";
+    color: #f44336;
+}
+.status-pending::after {
+    content: "...";
+    color: #2196F3;
+}
+
+/* --- Table Fixes START --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0;
+    table-layout: fixed; /* This is the key fix to keep columns from expanding */
+}
+
+/* This rule applies to all cells to prevent them from breaking the table layout */
+th, td {
+    border-bottom: 1px solid #eee;
+    padding: 15px;
+    text-align: left;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: visible;
+}
+
+/* This new class is for the cells that have long text and need truncation */
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* --- Table Fixes END --- */
+
+th {
+    background-color: #fff;
+    font-weight: 680;
+    color: #555;
+}
+
+.view-btn {
+    padding: 8px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+}
+
+.view-btn:hover {
+    background-color: #45a049;
+}
+
+.delete-btn {
+    background-color: #f44336;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-left: 5px;
+    display: inline-block;
+}
+
+.delete-btn:hover {
+    background-color: #da190b;
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+    font-size: 0.9em;
+    color: #888;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.pagination-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #555;
+    font-weight: 500;
+}
+
+.pagination-item.active {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.pagination-item:hover:not(.active) {
+    background-color: #f0f0f0;
+}
+
+/* --- Responsive Adjustments --- */
+
+/* Small screens: mobile menu with hamburger */
+@media (max-width: 768px) {
+    .admin-dashboard-layout {
+        flex-direction: column;
+        overflow-x: hidden;
+    }
+    .admin-main-nav {
+        display: none;
+    }
+    .mobile-sidebar {
+        left: -280px; /* Hidden off-screen */
+        display: flex;
+        padding-top: 100px;
+    }
+    .mobile-sidebar.open {
+        left: 0;
+    }
+    .hamburger-menu-btn {
+        display: block; /* Show hamburger button on mobile */
+    }
+    .backdrop {
+        display: block;
+    }
+    .main-content {
+        padding: 10px;
+        margin-top: 0;
+    }
+    
+    .admin-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        position: static;
+        width: auto;
+        box-shadow: none;
+    }
+
+    .agreements-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .table-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        gap: 10px;
+    }
+    .search-input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .sort-by-dropdown {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+    thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    tr {
+        border: 1px solid #eee;
+        margin-bottom: 10px;
+        border-radius: 8px;
+    }
+    td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+        text-align: right;
+    }
+    td:last-child {
+        border-bottom: none;
+    }
+    td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: bold;
+        color: #333;
+    }
+    .status-dropdown {
+        width: 100%;
+        text-align: left;
+        padding: 8px;
+    }
+    .status-dropdown::after {
+        right: 20px;
+    }
+    .error-message {
+        font-size: 0.85em;
+        padding: 8px 12px;
+    }
+    .pagination {
+        flex-direction: column;
+    }
+}
+
+/* Tablet screens: horizontal nav bar */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .admin-dashboard-layout {
+        flex-direction: column;
+    }
+    .admin-main-nav {
+        display: flex;
+    }
+    .mobile-sidebar {
+        display: none;
+    }
+    .hamburger-menu-btn {
+        display: none;
+    }
+    .main-content {
+        margin-top: 0;
+        padding-top: 30px;
+    }
+    .agreements-header {
+        flex-direction: row;
+        align-items: center;
+    }
+    .table-controls {
+        flex-direction: row;
+        align-items: center;
+        width: auto;
+    }
+    .search-input {
+        width: 250px;
+    }
+}
+
+/* Large screens: vertical sidebar */
+@media (min-width: 1025px) {
+    .admin-dashboard-layout {
+        display: flex;
+        flex-direction: row;
+    }
+    .admin-main-nav {
+        display: none;
+    }
+    .mobile-sidebar {
+        display: flex;
+        position: static;
+        width: 250px;
+        height: 100vh;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+        padding: 30px 15px;
+        left: 0;
+        z-index: 1;
+    }
+    .mobile-sidebar-header {
+        display: none;
+    }
+    .sidebar-section-title {
+        display: block;
+    }
+    .sidebar-logo {
+        display: block;
+        text-align: center;
+        margin-bottom: 20px;
+        padding: 0 20px;
+    }
+    .sidebar-logo .logo-main {
+        font-size: 24px;
+        font-weight: 800;
+        color: #4CAF50;
+    }
+    .sidebar-logo .logo-sub {
+        font-size: 12px;
+        color: #555;
+    }
+    .admin-nav-header {
+        display: none;
+    }
+    .main-content {
+        flex-grow: 1;
+        padding: 25px;
+        margin-left: 0;
+    }
+    .hamburger-menu-btn {
+        display: none;
+    }
+    .close-menu-btn {
+        display: none;
+    }
+    .nav-item {
+        border-left: 4px solid transparent;
+        padding: 12px 20px;
+    }
+    .nav-item.active {
+        border-left: 4px solid #4CAF50;
+    }
+    .agreements-header {
+        flex-direction: row;
+        align-items: center;
+    }
+    .table-controls {
+        flex-direction: row;
+        align-items: center;
+        width: auto;
+    }
+    .search-input {
+        width: 300px;
+    }
+}
+
+/* --- Desktop Fixed Sidebar (Large screens) --- */
+@media (min-width: 1025px) {
+    .admin-dashboard-layout {
+        display: flex;
+        flex-direction: row;
+    }
+
+    /* Make sidebar fixed */
+    .mobile-sidebar {
+        display: flex;
+        position: fixed;   /* <-- fixed instead of static */
+        top: 0;
+        left: 0;
+        width: 250px;
+        height: 100vh;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+        padding: 30px 15px;
+        background: #fff;
+        z-index: 1000;
+    }
+
+    /* Ensure main content is pushed right */
+    .main-content {
+        flex-grow: 1;
+        padding: 25px;
+        margin-left: 250px;   /* <-- equal to sidebar width */
+    }
+
+    .mobile-sidebar-header {
+        display: none;
+    }
+    .sidebar-section-title {
+        display: block;
+    }
+    .sidebar-logo {
+        display: block;
+        text-align: center;
+        margin-bottom: 20px;
+        padding: 0 20px;
+    }
+    .sidebar-logo .logo-main {
+        font-size: 24px;
+        font-weight: 800;
+        color: #4CAF50;
+    }
+    .sidebar-logo .logo-sub {
+        font-size: 12px;
+        color: #555;
+    }
+    .admin-nav-header {
+        display: none;
+    }
+    .hamburger-menu-btn {
+        display: none;
+    }
+    .close-menu-btn {
+        display: none;
+    }
+    .nav-item {
+        border-left: 4px solid transparent;
+        padding: 12px 20px;
+    }
+    .nav-item.active {
+        border-left: 4px solid #4CAF50;
+    }
+}
