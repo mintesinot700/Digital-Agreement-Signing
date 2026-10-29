@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { FaChartBar, FaUsers, FaCog, FaUser, FaSignOutAlt, FaSearch, FaBars, FaTimes, FaPlus, FaEdit, FaTrashAlt, FaFilePdf, FaArrowLeft } from 'react-icons/fa';
-import api from '../api';
+import { FaChartBar, FaUsers, FaCog, FaUser, FaSignOutAlt, FaSearch, FaBars, FaTimes, FaPlus, FaEdit, FaTrashAlt, FaFilePdf, FaArrowLeft, FaDownload, FaHistory } from 'react-icons/fa';
+import api, { downloadAuthedFile } from '../api';
 import '../styles/AdminDashboard.css';
 import '../styles/PdfAgreement.css';
 import '../styles/AgreementDetail.css';
@@ -65,6 +65,11 @@ const AdminDashboard = () => {
     const [agreement, setAgreement] = useState(null);
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [errorDetail, setErrorDetail] = useState('');
+
+    // Audit trail states
+    const [auditLogs, setAuditLogs] = useState([]);
+    const [auditLoading, setAuditLoading] = useState(false);
+    const [statusFilter, setStatusFilter] = useState('');
 
     // State for PDF viewer modal
     const [isPdfViewerOpen, setIsPdfViewerOpen] = useState(false);
@@ -280,11 +285,9 @@ const AdminDashboard = () => {
                     api.get(API_ENDPOINTS.USER_LIST || 'api/UserListView/'),
                 ]);
 
-                const agreementsWithStatus = (Array.isArray(agreementsRes.data) ? agreementsRes.data : []).map((ag, index) => ({
+                const agreementsWithStatus = (Array.isArray(agreementsRes.data) ? agreementsRes.data : []).map((ag) => ({
                     ...ag,
-                    agreement_type: 'Daily',
-                    signed_date: ag.signed_date ? new Date(ag.signed_date) : new Date(),
-                    branch: index % 2 === 0 ? 'Sairs' : 'Bole',
+                    submitted: ag.submited_date ? new Date(ag.submited_date) : null,
                     status: (ag.status || 'pending').toLowerCase(),
                 }));
 
@@ -317,7 +320,7 @@ const AdminDashboard = () => {
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const tabParam = params.get('tab');
-        if (tabParam && ['agreements', 'users', 'pdf-agreements', 'pdf-upload'].includes(tabParam)) {
+        if (tabParam && ['agreements', 'users', 'pdf-agreements', 'pdf-upload', 'audit'].includes(tabParam)) {
             setActiveTab(tabParam);
         }
     }, [location.search]);
@@ -333,16 +336,19 @@ const AdminDashboard = () => {
         );
 
         const sorted = [...filtered].sort((a, b) => {
+            const timeA = a.submitted ? a.submitted.getTime() : 0;
+            const timeB = b.submitted ? b.submitted.getTime() : 0;
             if (sortOption === 'Newest') {
-                return b.signed_date - a.signed_date;
+                return timeB - timeA;
             } else if (sortOption === 'Oldest') {
-                return a.signed_date - b.signed_date;
+                return timeA - timeB;
             }
             return 0;
         });
 
-        setFilteredAgreements(sorted);
-    }, [agreements, agreementSearchTerm, sortOption]);
+        const byStatus = statusFilter ? sorted.filter((ag) => ag.status === statusFilter) : sorted;
+        setFilteredAgreements(byStatus);
+    }, [agreements, agreementSearchTerm, sortOption, statusFilter]);
 
     useEffect(() => {
         const lowerCaseSearchTerm = userSearchTerm.toLowerCase();
@@ -360,6 +366,38 @@ const AdminDashboard = () => {
             fetchAgreementDetail(id);
         }
     }, [id]);
+
+    // --- Audit trail ---
+    const fetchAuditLogs = async () => {
+        setAuditLoading(true);
+        try {
+            const res = await api.get(API_ENDPOINTS.AUDIT_LOG);
+            const entries = Array.isArray(res.data) ? res.data : res.data?.results || [];
+            setAuditLogs(entries);
+        } catch (err) {
+            console.error('Failed to fetch audit logs:', err);
+            setAuditLogs([]);
+        } finally {
+            setAuditLoading(false);
+        }
+    };
+
+    const handleDownloadPdf = async (agreementId, name) => {
+        try {
+            const filename = `agreement_${agreementId}_${(name || 'summary').replace(/\s+/g, '_')}.pdf`;
+            await downloadAuthedFile(`api/agreement/${agreementId}/pdf/`, filename);
+        } catch (err) {
+            console.error('PDF download failed:', err);
+            setError('Failed to download the agreement PDF. Please try again.');
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'audit') {
+            fetchAuditLogs();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab]);
 
     // --- Render Functions ---
 
@@ -454,6 +492,10 @@ const AdminDashboard = () => {
                                 <strong>Agreement paper</strong>
                                 <span>{agreement.pdf_agreement_name || 'N/A'}</span>
                             </div>
+                            <div className="info-group">
+                                <strong>Status</strong>
+                                <span className={`status-badge status-${agreement.status}`}>{(agreement.status_display || agreement.status || 'N/A').toUpperCase()}</span>
+                            </div>
                         </div>
                     </div>
                     <div className="signature-column">
@@ -495,7 +537,15 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 </div>
-                <button className="back-btn" onClick={() => navigate(-1)}>Back</button>
+                <div className="detail-actions">
+                    <button
+                        className="btn-primary"
+                        onClick={() => handleDownloadPdf(agreement.id, agreement.your_name)}
+                    >
+                        <FaDownload /> Download Summary PDF
+                    </button>
+                    <button className="back-btn" onClick={() => navigate(-1)}>Back</button>
+                </div>
             </div>
         );
     };
@@ -587,6 +637,52 @@ const AdminDashboard = () => {
         </div>
     );
 
+    const renderAuditTrail = () => (
+        <div className="audit-trail-table">
+            <div className="agreements-header">
+                <h2>Audit Trail</h2>
+                <div className="table-controls">
+                    <button className="btn-secondary" onClick={fetchAuditLogs}>
+                        <FaHistory /> Refresh
+                    </button>
+                </div>
+            </div>
+            {auditLoading ? (
+                <p>Loading audit trail...</p>
+            ) : auditLogs.length === 0 ? (
+                <p>No audit entries yet. Actions on agreements will appear here.</p>
+            ) : (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Action</th>
+                            <th>Agreement</th>
+                            <th>Actor</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {auditLogs.map((entry) => (
+                            <tr key={entry.id}>
+                                <td data-label="Time">{new Date(entry.timestamp).toLocaleString()}</td>
+                                <td data-label="Action">
+                                    <span className={`audit-action audit-${entry.action}`}>{entry.action.replace('_', ' ')}</span>
+                                </td>
+                                <td className="text-truncate" data-label="Agreement">
+                                    {entry.agreement_name || '—'}
+                                    {entry.agreement_id ? ` (#${entry.agreement_id})` : ''}
+                                </td>
+                                <td data-label="Actor">{entry.actor || entry.actor_name || 'system'}</td>
+                                <td className="text-truncate" data-label="Details">{entry.details || '—'}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
+        </div>
+    );
+
     const renderAgreementsTable = () => (
         <div className="agreements-table">
             <div className="agreements-header">
@@ -607,6 +703,13 @@ const AdminDashboard = () => {
                         />
                     </div>
                     <div className="sort-by-dropdown">
+                        <span>Status:</span>
+                        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                            <option value="">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
                         <span>Sort by:</span>
                         <select value={sortOption} onChange={handleSortChange}>
                             <option value="Newest">Newest</option>
@@ -650,6 +753,13 @@ const AdminDashboard = () => {
                                 <td data-label="Action">
                                     <button onClick={() => navigate(`/agreements/${agreement.id}`)} className="view-btn">
                                         View
+                                    </button>
+                                    <button
+                                        onClick={() => handleDownloadPdf(agreement.id, agreement.your_name)}
+                                        className="view-btn"
+                                        title="Download summary PDF"
+                                    >
+                                        <FaDownload />
                                     </button>
                                     <button onClick={() => handleDeleteAgreement(agreement.id)} className="delete-btn">
                                         Delete
@@ -741,6 +851,12 @@ const AdminDashboard = () => {
             >
                 <FaFilePdf className="nav-icon" /> PDF Agreements
             </div>
+            <div
+                className={`nav-item ${activeTab === 'audit' ? 'active' : ''}`}
+                onClick={() => handleTabClick('audit')}
+            >
+                <FaHistory className="nav-icon" /> Audit Trail
+            </div>
             <div className="nav-item" onClick={handleLogout}>
                 <FaSignOutAlt className="nav-icon" /> Log Out
             </div>
@@ -786,7 +902,15 @@ const AdminDashboard = () => {
 
             <main className="main-content">
                 <header className="admin-header">
-                    <h1>{activeTab === 'users' ? 'User Management' : 'Agreement Management'}</h1>
+                    <h1>
+                        {{
+                            agreements: 'Agreement Management',
+                            users: 'User Management',
+                            'pdf-agreements': 'PDF Agreements',
+                            'pdf-upload': 'Upload PDF Agreement',
+                            audit: 'Audit Trail',
+                        }[activeTab] || 'Agreement Management'}
+                    </h1>
                 </header>
                 {error && (
                     <div className="error-message">
@@ -804,18 +928,12 @@ const AdminDashboard = () => {
                             {activeTab === 'users' && renderUsersTable()}
                             {activeTab === 'pdf-agreements' && renderPdfAgreementList()}
                             {activeTab === 'pdf-upload' && renderUploadForm()}
-                            
+                            {activeTab === 'audit' && renderAuditTrail()}
+
                             <div className="pagination">
-                                <span>Showing data 1 to 8 of 256K entries</span>
-                                <div className="pagination-controls">
-                                    <span className="pagination-item active">1</span>
-                                    <span className="pagination-item">2</span>
-                                    <span className="pagination-item">3</span>
-                                    <span className="pagination-item">4</span>
-                                    <span className="pagination-item">..</span>
-                                    <span className="pagination-item">40</span>
-                                    <span className="pagination-item">&gt;</span>
-                                </div>
+                                <span>
+                                    Showing {filteredAgreements.length} agreement{filteredAgreements.length === 1 ? '' : 's'}
+                                </span>
                             </div>
                         </>
                     )}

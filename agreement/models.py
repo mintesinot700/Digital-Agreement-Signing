@@ -213,5 +213,59 @@ class Agreement(models.Model):
         default='pending',
     ) 
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Snapshot the loaded status so signals can detect status changes.
+        self._original_status = self.status
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._original_status = self.status
+
     def __str__(self):
         return f"{self.your_name}'s Agreement"
+
+
+class AuditLog(models.Model):
+    """Immutable audit trail for agreement lifecycle events."""
+
+    ACTION_CHOICES = [
+        ('created', 'Created'),
+        ('updated', 'Updated'),
+        ('status_changed', 'Status Changed'),
+        ('deleted', 'Deleted'),
+        ('pdf_generated', 'PDF Generated'),
+    ]
+
+    agreement_name = models.CharField(
+        max_length=250,
+        blank=True,
+        help_text="Name of the agreement owner at the time of the event."
+    )
+    agreement_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="ID of the related agreement (kept even after the agreement is deleted)."
+    )
+    agreement_type = models.CharField(max_length=300, blank=True)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    actor = models.ForeignKey(
+        UserAccounts,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='audit_logs',
+        help_text="User who performed the action (null for system events)."
+    )
+    actor_name = models.CharField(max_length=150, blank=True)
+    details = models.TextField(blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = 'Audit log entry'
+        verbose_name_plural = 'Audit logs'
+
+    def __str__(self):
+        return f"[{self.timestamp:%Y-%m-%d %H:%M}] {self.action} by {self.actor_name or 'system'}"

@@ -19,5 +19,12 @@ export const IS_ADMIN = ADMIN.ROLE;
 export const API_ENDPOINTS = {
   LOGIN: "api/token/",
   REFRESH: "api/token/refresh/",
-  VERIFY_ADMIN: "api/verify-admin/"
+  LOGOUT: "api/user/logout/",
+  REGISTER: "api/user/register/",
+  VERIFY_ADMIN: "api/verify-admin/",
+  AGREEMENT_LIST: "api/agreement_list/",
+  MY_AGREEMENTS: "api/my-agreements/",
+  USER_LIST: "api/UserListView/",
+  PDF_AGREEMENTS: "api/pdf_agreement/",
+  AUDIT_LOG: "api/audit-log/"
 };

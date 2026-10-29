@@ -1,18 +1,18 @@
-from django.shortcuts import render, redirect
-from .forms import AgreementForm, Pdf_agreementForm
-from .models import Agreement, Pdf_agreement
+from io import BytesIO
+
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
-from Accounts.models import UserAccounts
-from django.contrib import messages 
-from rest_framework.decorators import api_view, permission_classes, APIView
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializers import AgreementSerializer, Pdf_agreementSerializer
-from rest_framework.permissions import IsAdminUser,IsAuthenticated,IsAdminUser , AllowAny
-from rest_framework.generics import ListAPIView, CreateAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework import status, serializers
-from django.http import HttpResponse 
+from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework import status
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
+
+from .models import Agreement, Pdf_agreement, AuditLog
+from .pdf_service import generate_agreement_pdf
+from .signals import log_action
+from .serializers import AgreementSerializer, Pdf_agreementSerializer, AuditLogSerializer
 
 
 # Create an Agreement by the Authenticated user
@@ -20,44 +20,63 @@ class AgreementCreateView(CreateAPIView):
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     permission_classes = [IsAuthenticated]
     serializer_class = AgreementSerializer
-      
+
     def perform_create(self, serializer):
-        print("Received request data:", self.request.data)
-        # No need to manually fetch pdf_agreement; serializer handles it
         serializer.save(user=self.request.user)
+
+
+# List of the logged-in user's own agreements
+class MyAgreementsListView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AgreementSerializer
+
+    def get_queryset(self):
+        return (Agreement.objects
+                .filter(user=self.request.user)
+                .select_related('user')
+                .order_by('-submited_date'))
+
 
 # View List of Agreements by the Admin
 class AgreementListView(ListAPIView):
-    permission_classes=[IsAdminUser]
+    permission_classes = [IsAdminUser]
     serializer_class = AgreementSerializer
-    
+
     def get_queryset(self):
-        return Agreement.objects.select_related('user').all().order_by('-submited_date')
+        queryset = (Agreement.objects
+                    .select_related('user')
+                    .all()
+                    .order_by('-submited_date'))
+        # Optional filtering: /api/agreement_list/?status=pending
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(your_name__icontains=search)
+        return queryset
 
 
-# Get detail of Agreement and Delete by the Admin
+# Get detail of Agreement, update and Delete by the Admin
 class AgreementDetailView(APIView):
-
     permission_classes = [IsAdminUser]
 
     def get_object(self, pk):
         try:
-            return Agreement.objects.get(pk=pk)
+            return Agreement.objects.select_related('user').get(pk=pk)
         except Agreement.DoesNotExist:
             return None
 
     def get(self, request, pk):
-        
         agreement = self.get_object(pk)
         if not agreement:
             return Response(
-                {'detail': 'Agreement not found'}, 
+                {'detail': 'Agreement not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
         serializer = AgreementSerializer(agreement)
         return Response(serializer.data)
-    
+
     def patch(self, request, pk):
         agreement = self.get_object(pk)
         if not agreement:
@@ -65,7 +84,6 @@ class AgreementDetailView(APIView):
                 {'detail': 'Agreement not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
         serializer = AgreementSerializer(agreement, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -75,14 +93,40 @@ class AgreementDetailView(APIView):
     def delete(self, request, pk):
         agreement = self.get_object(pk)
         if agreement is None:
-            return Response({'detail':'agreement not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'agreement not found'}, status=status.HTTP_404_NOT_FOUND)
         agreement.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
+
+# Download a generated summary PDF of an agreement (admin, or the owner)
+class AgreementPDFDownloadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        agreement = Agreement.objects.filter(pk=pk).first()
+        if not agreement:
+            return Response({'detail': 'Agreement not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not (request.user.is_staff or request.user.is_superuser
+                or agreement.user_id == request.user.id):
+            return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        pdf_bytes = generate_agreement_pdf(agreement)
+        log_action(
+            agreement,
+            'pdf_generated',
+            details=f'Summary PDF generated by {request.user.username}.',
+            actor=request.user,
+        )
+        filename = f"agreement_{agreement.pk}_{agreement.your_name.replace(' ', '_')}.pdf"
+        response = FileResponse(BytesIO(pdf_bytes), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
 
 class Pdf_agreementCreateView(CreateAPIView):
     serializer_class = Pdf_agreementSerializer
-    permission_classes = [IsAdminUser] 
+    permission_classes = [IsAdminUser]
 
 
 class Pdf_agreementUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -91,43 +135,29 @@ class Pdf_agreementUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         pk = self.kwargs.get('pk')
-        try:
-            return Pdf_agreement.objects.get(pk=pk)
-        except Pdf_agreement.DoesNotExist:
-            return None
-
-    def patch(self, request, pk=None):
-        pdf = self.get_object()
-        if not pdf:
-            return Response({'detail': 'pdf not found'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = Pdf_agreementSerializer(pdf, data=request.data, partial=True, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk=None):
-        pdf = self.get_object()
-        if not pdf:
-            return Response({'detail': 'pdf not found'}, status=status.HTTP_404_NOT_FOUND)
-        pdf.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return get_object_or_404(Pdf_agreement, pk=pk)
 
 
 class Pdf_agreementListView(ListAPIView):
-    queryset = Pdf_agreement.objects.all()
+    queryset = Pdf_agreement.objects.all().order_by('id')
     serializer_class = Pdf_agreementSerializer
     permission_classes = [AllowAny]
 
-
     def get_serializer_context(self):
         return {'request': self.request}
-    
+
+
 def pdf_file_view(request, pk):
-     
-        pdf = get_object_or_404(Pdf_agreement, pk=pk)
-        response = FileResponse(pdf.pdf_file.open(), content_type='application/pdf')
-        response['X-Frame-Options'] = 'ALLOWALL'   # ✅ allows embedding only for this response
-        return response
-    
-    
+    pdf = get_object_or_404(Pdf_agreement, pk=pk)
+    response = FileResponse(pdf.pdf_file.open(), content_type='application/pdf')
+    response['X-Frame-Options'] = 'ALLOWALL'  # allows iframe embedding for this response only
+    return response
+
+
+# Audit trail — admin only
+class AuditLogListView(ListAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = AuditLogSerializer
+
+    def get_queryset(self):
+        return AuditLog.objects.select_related('actor').all()

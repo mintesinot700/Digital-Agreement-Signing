@@ -46,7 +46,7 @@ const AgreementForm = () => {
   const cityRegex = /^[a-zA-Z\s-]+$/;
   const nationalityRegex = /^[a-zA-Z\s-]+$/;
   const phoneRegex = /^\+?\d{9,15}$/;
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.com$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
 
   const handleLogout = () => {
     localStorage.removeItem(ACCESS_TOKEN);
@@ -89,19 +89,32 @@ const AgreementForm = () => {
     }
   }, [signatureDataURL]);
 
-  const startDrawing = ({ nativeEvent }) => {
-    const { offsetX, offsetY } = nativeEvent;
+  const getEventCoords = (event) => {
+    const canvas = signatureCanvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    // Touch events carry client coords on the touches list; mouse events on the event itself.
+    const source = event.touches && event.touches[0] ? event.touches[0] : event;
+    return {
+      x: source.clientX - rect.left,
+      y: source.clientY - rect.top,
+    };
+  };
+
+  const startDrawing = (event) => {
+    event.preventDefault(); // stop scrolling while signing on touch devices
+    const { x, y } = getEventCoords(event);
     const ctx = signatureCanvasRef.current.getContext('2d');
     ctx.beginPath();
-    ctx.moveTo(offsetX, offsetY);
+    ctx.moveTo(x, y);
     setIsDrawing(true);
   };
 
-  const draw = ({ nativeEvent }) => {
+  const draw = (event) => {
     if (!isDrawing) return;
-    const { offsetX, offsetY } = nativeEvent;
+    event.preventDefault();
+    const { x, y } = getEventCoords(event);
     const ctx = signatureCanvasRef.current.getContext('2d');
-    ctx.lineTo(offsetX, offsetY);
+    ctx.lineTo(x, y);
     ctx.stroke();
   };
 
@@ -148,7 +161,7 @@ const AgreementForm = () => {
     if (!form.phone_number || !phoneRegex.test(form.phone_number))
       newErrors.phone_number = 'Valid phone number (9-15 digits) required.';
     if (!form.email_account || !emailRegex.test(form.email_account))
-      newErrors.email_account = 'Valid email ending in .com required.';
+      newErrors.email_account = 'Valid email address required.';
     if (!form.photo_of_userID) newErrors.photo_of_userID = 'User ID photo is required.';
     else if (!['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(form.photo_of_userID.type))
       newErrors.photo_of_userID = 'User ID photo must be JPG, PNG, or GIF.';
@@ -183,12 +196,8 @@ const AgreementForm = () => {
   const handleReadAgreement = () => {
     if (selectedAgreement) {
       const agreement = agreementTitles.find(a => a.id === parseInt(selectedAgreement));
-      if (agreement && agreement.pdf_file) {
-        setCurrentPdfUrl(agreement.pdf_file);
-        setIsPdfViewerOpen(true);
-      }
       if (agreement && agreement.pdf_url) {
-        setCurrentPdfUrl(agreement.pdf_url); // ✅ uses iframe-safe endpoint
+        setCurrentPdfUrl(agreement.pdf_url); // iframe-safe endpoint
         setIsPdfViewerOpen(true);
       }
     }
@@ -316,16 +325,16 @@ const AgreementForm = () => {
                       src={require('../logo/images.png')}
                       alt="Ashewa Technology Logo"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/70';
+                        e.target.style.display = 'none';
                         console.error('Logo failed to load at ../logo/images.png');
                       }}
                     />
                   ) : (
                     <img
-                      src="../logo/images.png"
+                      src="/static/logo/images.png"
                       alt="Ashewa Technology Logo"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/70';
+                        e.target.style.display = 'none';
                         console.error('Logo failed to load at ../logo/images.png');
                       }}
                     />

@@ -786,3 +786,114 @@ th {
         border-left: 4px solid #4CAF50;
     }
 }
+/* ===== Audit Trail ===== */
+.audit-trail-table {
+    padding: 10px 0;
+}
+
+.audit-action {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.audit-created { background: #e3f2fd; color: #1565c0; }
+.audit-updated { background: #fff3e0; color: #e65100; }
+.audit-status_changed { background: #e8f5e9; color: #2e7d32; }
+.audit-deleted { background: #ffebee; color: #c62828; }
+.audit-pdf_generated { background: #f3e5f5; color: #6a1b9a; }
+
+/* ===== Status badge (detail view) ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.status-approved { background: #e8f5e9; color: #2e7d32; }
+.status-badge.status-rejected { background: #ffebee; color: #c62828; }
+.status-badge.status-pending { background: #fff8e1; color: #f57f17; }
+
+/* ===== Detail action buttons ===== */
+.detail-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.detail-actions .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #3949ab, #1a237e);
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.detail-actions .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* ===== Responsive tables ===== */
+@media (max-width: 768px) {
+    .audit-trail-table table thead {
+        display: none;
+    }
+
+    .audit-trail-table table,
+    .audit-trail-table table tbody,
+    .audit-trail-table table tr,
+    .audit-trail-table table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .audit-trail-table table tr {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+
+    .audit-trail-table table td {
+        border: none;
+        padding: 6px 8px;
+        text-align: left;
+    }
+
+    .audit-trail-table table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        font-size: 11px;
+        color: #888;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .detail-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .detail-actions .btn-primary,
+    .detail-actions .back-btn {
+        width: 100%;
+    }
+}

@@ -4,7 +4,12 @@ from django.contrib.auth.models import AbstractUser, PermissionsMixin
 
 
 class UserAccounts(AbstractUser, PermissionsMixin):
-    phone_number = models.CharField(null=True, blank = False,  )
+    phone_number = models.CharField(
+        max_length=17,
+        null=True,
+        blank=True,
+        help_text="Contact phone number, e.g. '+251912345678'."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
 

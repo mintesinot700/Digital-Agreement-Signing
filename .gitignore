@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Django
+db.sqlite3
+*.log
+staticfiles/
+
+# Environment / secrets
+.env
+.env.local
+.env*.local
+
+# Uploaded user content (keep the dirs via .gitkeep, not the files)
+media/*
+!media/.gitkeep
+
+# Node / React
+node_modules/
+agreement/templates/ashewa/my-first-app/build/
+npm-debug.log*
+yarn-error.log*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Testing / coverage
+.coverage
+htmlcov/
+.pytest_cache/

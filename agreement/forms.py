@@ -1,101 +1,71 @@
-from django import forms 
-from .models import Agreement , Pdf_agreement
-from rest_framework import serializers
-from django.core.validators import validate_email, RegexValidator
-from django.core.exceptions import ValidationError
-import re 
+from django import forms
+from .models import Agreement, Pdf_agreement
 
-# Form for the Agreement model
+# NOTE: The REST API endpoints validate data through DRF serializers
+# (see serializers.py). These classic Django ModelForms are kept for use in
+# the Django admin or server-rendered pages, and implement the same rules.
+
+
 class AgreementForm(forms.ModelForm):
+    """ModelForm for the Agreement model with the same validation rules
+    as AgreementSerializer."""
+
     class Meta:
-        model= Agreement
+        model = Agreement
         fields = '__all__'
         widgets = {
             'gender': forms.RadioSelect(choices=Agreement.GENDER_CHOICES),
         }
 
-# validate contact_info field
-    def validate_phone_number(self, value):
+    def clean_your_name(self):
+        name = self.cleaned_data.get('your_name', '').strip()
+        if len(name) < 2:
+            raise forms.ValidationError("your_name must be at least 2 characters long.")
+        return name.title()
 
-            phone_regex = re.compile(r'^(\+?1?[ -]?)?(\([0-9]{3}\)|[0-9]{3})[ -]?[0-9]{3}[ -]?[0-9]{4}$'
-)
-            if phone_regex.match(value):
-                return value
-            else:
-                raise ValidationError("Enter a phone number.")
+    def clean_father_name(self):
+        name = self.cleaned_data.get('father_name', '').strip()
+        if len(name) < 2:
+            raise forms.ValidationError("father_name must be at least 2 characters long.")
+        return name.title()
 
-    def validate_email_account(self, value):
-        try:
-            validate_email(value)
-            return value
-        except ValidationError:
-                raise ValidationError("Enter a valid email or phone number.")
+    def clean_grand_father_name(self):
+        name = self.cleaned_data.get('grand_father_name', '').strip()
+        if len(name) < 2:
+            raise forms.ValidationError("grand_father_name must be at least 2 characters long.")
+        return name.title()
 
-# validate signature field    
-    def validate_signature(self, file):
-        try:
-            img = Image.open(file)
-            img.verify()  
-        except Exception:
-            raise serializers.ValidationError("please uploaded signature.")
-
-        return file
-            
-# clean the agreement field
-   
-    def clean_save_agreement(self): 
-        name = self.cleaned_data.get('save_agreement')
-        if len(name)<2:
-            raise forms.ValidationError("title must be at least 3 charaters long.")
-        return name
-    def clean_your_name(self): 
-        name = self.cleaned_data.get('your_name')
-        if len(name)<2:
-            raise forms.ValidationError("your_name must be at least 3 charaters long.")
-        return name
-
-    def clean_father_name(self): 
-        name = self.cleaned_data.get('father_name')
-        if len(name)<2:
-            raise forms.ValidationError("father_name must be at least 3 charaters long.")
-        return name
-
-    def clean_grand_father_name(self): 
-        name = self.cleaned_data.get('grand_father_name')
-        if len(name)<3:
-            raise forms.ValidationError("grand_father_name' must be at least 3 charaters long.")
-        return name
-    
     def clean_phone_number(self):
-        Phone_number = self.cleaned_data.get('phone_number') 
-        if not Phone_number:
-            raise forms.ValidationError("This field is requied.")
-        return self.validate_phone_number(Phone_number)
+        phone_number = self.cleaned_data.get('phone_number')
+        if not phone_number:
+            raise forms.ValidationError("This field is required.")
+        digits = ''.join(filter(str.isdigit, phone_number))
+        if not 9 <= len(digits) <= 15:
+            raise forms.ValidationError("Enter a valid phone number with 9–15 digits.")
+        return phone_number.strip()
 
     def clean_email_account(self):
-        Email_account = self.cleaned_data.get('email_account') 
-        if not Email_account:
-            raise forms.ValidationError("This field is requied.")
-        return self.validate_Email_account(Email_account)
-        
-        if Agreement.objects.filter(Email_account=email_account).exists():
-             raise ValueError("This email already exists!")
-        return self.validate_email_account(Email_account)
+        email_account = self.cleaned_data.get('email_account')
+        if not email_account:
+            return email_account
+        if '@' not in email_account or '.' not in email_account.split('@')[-1]:
+            raise forms.ValidationError("Please enter a valid email address.")
+        return email_account.strip().lower()
 
     def clean_address(self):
-        address = self.cleaned_data['address'].strip()
+        address = self.cleaned_data.get('address', '').strip()
         if len(address) < 2:
-            raise forms.ValidationError("Address must be at least 10 characters long.")
+            raise forms.ValidationError("Address must be at least 2 characters long.")
         return address
 
     def clean_city(self):
-        city = self.cleaned_data['city'].strip()
+        city = self.cleaned_data.get('city', '').strip()
         if not city.replace(" ", "").replace("-", "").isalpha():
             raise forms.ValidationError("City/Town can only contain letters, spaces and hyphens.")
-        return city
+        return city.title()
 
     def clean_nationality(self):
-        nationality = self.cleaned_data['nationality'].strip()
+        nationality = self.cleaned_data.get('nationality', '').strip()
         if not nationality.replace(" ", "").replace("-", "").isalpha():
             raise forms.ValidationError("Nationality can only contain letters, spaces and hyphens.")
         return nationality.title()
@@ -103,67 +73,32 @@ class AgreementForm(forms.ModelForm):
     def clean_signature(self):
         signature = self.cleaned_data.get('signature')
         if not signature or signature == 'data:,':
-            raise forms.ValidationError(('Please provide your signature'))
+            raise forms.ValidationError("Please provide your signature.")
         return signature
 
-    def clean_agreement_paper_file(self):
-        pdf = self.cleaned_data.get('agreement_Paper_file')
 
-
-        if not pdf.name.endswith('.pdf'):
-            raise ValidationError("Only PDF files are allowed.")
-
-
-        max_size = 5 * 1024 * 1024  
-        if pdf.size > max_size:
-            raise ValidationError("PDF file is too large (max 5MB).")
-
-        return pdf
-
-    def clean_agreement(self):
-        agreement = self.cleaned_data.get("agreement")
-        return agreement
-     
-    def clean(self):
-        cleaned_data = super().clean()
-        return cleaned_data
-
-    
-# Form for Pdf_agreement model    
 class Pdf_agreementForm(forms.ModelForm):
+    """ModelForm for uploading an agreement template PDF."""
 
     class Meta:
         model = Pdf_agreement
-        fields= ['type_of_agreement','pdf_file']
+        fields = ['type_of_agreement', 'pdf_file']
 
     def clean_type_of_agreement(self):
-        type = self.cleaned_data['type_of_agreement'].strip()
-        if not type.replace(" ", "").replace("-", "").isalpha():
-            raise forms.ValidationError("please, use only contain letters, spaces and hyphens.")
-        return type
-    
+        value = self.cleaned_data['type_of_agreement'].strip()
+        if not value:
+            raise forms.ValidationError("type_of_agreement cannot be empty.")
+        if not value.replace(" ", "").replace("-", "").isalpha():
+            raise forms.ValidationError("Please use only letters, spaces and hyphens.")
+        return value
+
     def clean_pdf_file(self):
         pdf = self.cleaned_data.get('pdf_file')
-
-
-        if not pdf.name.endswith('.pdf'):
-            raise ValidationError("Only PDF files are allowed.")
-
-
-        max_size = 5 * 1024 * 1024  
+        if not pdf:
+            raise forms.ValidationError("Please upload a PDF file.")
+        if not pdf.name.lower().endswith('.pdf'):
+            raise forms.ValidationError("Only PDF files are allowed.")
+        max_size = 5 * 1024 * 1024  # 5MB
         if pdf.size > max_size:
-            raise ValidationError("PDF file is too large (max 5MB).")
-
+            raise forms.ValidationError("PDF file is too large (max 5MB).")
         return pdf
-
-    def clean_Pdf_agreement(self):
-        agreement = self.cleaned_data.get("Pdf_agreement")
-        return agreement
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        return cleaned_data
-    
-
-
-

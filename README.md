@@ -1,0 +1,139 @@
+# Digital Agreement Signing
+
+A robust, cloud-based platform for secure, legally compliant, and instantaneous
+electronic signing of documents and contracts. Built with **Django 5 + Django
+REST Framework** (backend) and **React (Create React App)** (frontend).
+
+## Features
+
+- **User registration & JWT authentication** — access tokens in memory,
+  refresh token in an HttpOnly cookie, silent refresh on expiry, logout with
+  refresh-token blacklisting.
+- **Agreement templates** — admins upload agreement PDFs; users browse and
+  read them in an embedded viewer before signing.
+- **Agreement submission** — users fill personal details, upload a profile
+  photo and ID photo, and **draw their signature** on a signature pad
+  (works with mouse and touch).
+- **Admin dashboard** — review agreements, approve/reject with a click,
+  manage users, upload/edit/delete PDF templates.
+- **Summary PDF generation** — one-click download of a printable agreement
+  summary document including the captured signature.
+- **Email notifications** — submission confirmations and status-change
+  notifications (approve/reject) sent to the signer's email.
+- **Audit trail** — every create/update/status-change/delete/PDF-download is
+  recorded with actor, timestamp and details, visible in the dashboard and
+  the Django admin.
+- **Production-ready** — environment-driven settings, WhiteNoise static
+  serving, Gunicorn, Docker & docker-compose deployment.
+
+## Project structure
+
+```
+├── Accounts/                 # Custom user model, auth API (JWT login/refresh/logout)
+├── agreement/                # Agreements, PDF templates, audit log, PDF service
+│   ├── models.py             # Agreement, Pdf_agreement, AuditLog
+│   ├── serializers.py        # DRF serializers (validation)
+│   ├── pdf_service.py        # ReportLab summary-PDF generator
+│   ├── signals.py            # Audit logging + email notifications
+│   └── templates/ashewa/my-first-app/   # React app (CRA)
+├── agreementForm/            # Django project settings/urls
+├── media/                    # Uploaded files (gitignored)
+├── Dockerfile                # Multi-stage: React build + Django runtime
+├── docker-compose.yml        # web + PostgreSQL
+└── .env.example              # Environment variable template
+```
+
+## API overview
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/token/` | POST | public | Login (returns access + user info, sets refresh cookie) |
+| `/api/token/refresh/` | POST | cookie | Rotate refresh token, issue new access token |
+| `/api/user/logout/` | POST | JWT | Blacklist refresh token, clear cookie |
+| `/api/user/register/` | POST | public | Create an account |
+| `/api/verify-admin/` | GET | JWT | Check admin status |
+| `/api/agreement/` | POST | JWT | Submit an agreement (multipart) |
+| `/api/my-agreements/` | GET | JWT | List the current user's agreements |
+| `/api/agreement_list/` | GET | admin | List all agreements (`?status=`, `?search=`) |
+| `/api/agreement/<id>/` | GET/PATCH/DELETE | admin | Retrieve / approve / reject / delete |
+| `/api/agreement/<id>/pdf/` | GET | owner/admin | Download generated summary PDF |
+| `/api/pdf_agreement/` | GET | public | List agreement templates |
+| `/api/pdf_agreement/create/` | POST | admin | Upload a template PDF |
+| `/api/pdf_agreement/<id>/` | PATCH/DELETE | admin | Edit / delete a template |
+| `/api/pdf/<id>/` | GET | public | Serve a template PDF (iframe-friendly) |
+| `/api/audit-log/` | GET | admin | Audit trail entries |
+| `/django-admin/` | — | staff | Django admin |
+
+## Local development (without Docker)
+
+**Backend**
+
+```bash
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver        # http://127.0.0.1:8000
+```
+
+By default the project uses **SQLite** — no database setup needed. Emails are
+printed to the console in development.
+
+**Frontend**
+
+```bash
+cd agreement/templates/ashewa/my-first-app
+npm install --legacy-peer-deps
+npm start                         # http://localhost:3000 (CORS is pre-configured)
+```
+
+Set `REACT_APP_API_URL=http://127.0.0.1:8000/` in the React app's environment
+if the API runs somewhere else.
+
+## Production deployment
+
+### Option A — Docker Compose (recommended)
+
+```bash
+cp .env.example .env
+# edit .env: set SECRET_KEY, POSTGRES_PASSWORD, ALLOWED_HOSTS,
+#            CORS_ALLOWED_ORIGINS, email credentials
+docker compose up -d --build
+docker compose exec web python manage.py createsuperuser
+```
+
+The app is served at `http://<host>:8000` — Django serves both the REST API
+and the built React app, behind Gunicorn + WhiteNoise.
+
+### Option B — any VPS / PaaS (Render, Railway, Fly.io, …)
+
+1. Provision PostgreSQL and set `DATABASE_URL=postgres://...`
+2. Set the environment variables from `.env.example`
+3. Build command: `pip install -r requirements.txt && cd agreement/templates/ashewa/my-first-app && npm install --legacy-peer-deps && npm install ajv@8.17.1 --legacy-peer-deps && npm run build && cd - && python manage.py collectstatic --noinput`
+4. Start command: `gunicorn agreementForm.wsgi:application --bind 0.0.0.0:$PORT`
+5. Migrate once: `python manage.py migrate`
+
+### Environment variables (all optional except in production)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SECRET_KEY` | insecure dev key | Django secret — **must** be set in production |
+| `DEBUG` | `False` | Debug mode |
+| `ALLOWED_HOSTS` | localhost | Comma-separated hosts |
+| `DATABASE_URL` / `POSTGRES_*` | SQLite | Database configuration |
+| `CORS_ALLOWED_ORIGINS` | localhost:3000 | Frontend origins |
+| `COOKIE_SECURE` | `not DEBUG` | Secure refresh cookie (set `True` behind HTTPS) |
+| `COOKIE_SAMESITE` | `Lax` | `Lax` or `None` (cross-site deployments) |
+| `EMAIL_BACKEND` | console | Set to `django.core.mail.backends.smtp.EmailBackend` in production |
+| `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` / `EMAIL_USE_TLS` | — | SMTP settings |
+| `DEFAULT_FROM_EMAIL` | no-reply@example.com | Sender for notifications |
+
+## Notes
+
+- The database (`db.sqlite3`), uploaded media and the React build are
+  **not tracked in git** — see `.gitignore`.
+- If your deployment is cross-site (frontend and API on different domains),
+  set `COOKIE_SAMESITE=None`, `COOKIE_SECURE=True` and both `CORS_ALLOWED_ORIGINS`
+  and `CSRF_TRUSTED_ORIGINS` to your frontend origin.
+- Historical git commits may still contain previously committed secrets —
+  rotate any credentials that were committed before this hardening pass.

@@ -53,7 +53,7 @@ function AuthForm({ route, method, onLogin }) {
             is_admin: verifyRes.data.is_admin
           });
           const isAdmin = verifyRes.data.is_admin === true || verifyRes.data.is_admin === 'true';
-          localStorage.setItem(IS_ADMIN, isAdmin);
+          localStorage.setItem(IS_ADMIN, isAdmin ? 'true' : 'false');
           console.log(`AuthForm: isAdmin evaluated to ${isAdmin}`);
 
           // CRITICAL: Call the onLogin function to update the parent state
@@ -120,17 +120,15 @@ function AuthForm({ route, method, onLogin }) {
                     src={require('../logo/images.png')}
                     alt="Ashewa Technology Logo"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/70';
-                      console.error('Logo failed to load at ../logo/images.png');
+                      e.target.style.display = 'none';
                     }}
                   />
                 ) : (
                   <img
-                    src="/styles/logo/images.png"
+                    src="/static/logo/images.png"
                     alt="Ashewa Technology Logo"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/70';
-                      console.error('Logo failed to load at ../logo/images.png');
+                      e.target.style.display = 'none';
                     }}
                   />
                 )}
@@ -222,17 +220,15 @@ function AuthForm({ route, method, onLogin }) {
                     src={require('../logo/images.png')}
                     alt="Ashewa Technology Logo"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/70';
-                      console.error('Logo failed to load at ../logo/images.png');
+                      e.target.style.display = 'none';
                     }}
                   />
                 ) : (
                   <img
-                    src="/styles/logo/images.png"
+                    src="/static/logo/images.png"
                     alt="Ashewa Technology Logo"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/70';
-                      console.error('Logo failed to load at ../logo/images.png');
+                      e.target.style.display = 'none';
                     }}
                   />
                 )}
