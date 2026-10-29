@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../api';
-import { ACCESS_TOKEN } from '../constants';
+import api, { downloadAuthedFile } from '../api';
+import { ACCESS_TOKEN, API_ENDPOINTS } from '../constants';
 import '../styles/AgreementForm.css';
 import PdfViewer from '../components/PdfViewer';
 
@@ -40,6 +40,9 @@ const AgreementForm = () => {
   const [selectedAgreement, setSelectedAgreement] = useState('');
   const [isPdfViewerOpen, setIsPdfViewerOpen] = useState(false);
   const [currentPdfUrl, setCurrentPdfUrl] = useState('');
+  const [myAgreements, setMyAgreements] = useState([]);
+  const [loadingMine, setLoadingMine] = useState(true);
+  const [downloadingPdf, setDownloadingPdf] = useState(null);
 
   const nameRegex = /^[a-zA-Z\s]+$/;
   const addressRegex = /^[a-zA-Z0-9\s-.,#]+$/;
@@ -53,6 +56,18 @@ const AgreementForm = () => {
     navigate('/login');
   };
 
+  const fetchMyAgreements = async () => {
+    try {
+      setLoadingMine(true);
+      const response = await api.get(API_ENDPOINTS.MY_AGREEMENTS);
+      setMyAgreements(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Failed to fetch my agreements:', error);
+    } finally {
+      setLoadingMine(false);
+    }
+  };
+
   useEffect(() => {
     const fetchAgreementTitles = async () => {
       try {
@@ -63,6 +78,7 @@ const AgreementForm = () => {
       }
     };
     fetchAgreementTitles();
+    fetchMyAgreements();
 
     const canvas = signatureCanvasRef.current;
     if (canvas) {
@@ -246,20 +262,14 @@ const AgreementForm = () => {
       formDataToSend.append('pdf_agreement', parseInt(selectedAgreement));
     }
 
-    // Debug logs moved here: After formDataToSend is fully populated
-    console.log('Selected Agreement ID:', selectedAgreement);
-    const formDataEntries = [...formDataToSend.entries()];
-    console.log('FormData being sent:', formDataEntries);
-
     try {
-      console.log('AgreementForm: Sending request to /agreement/');
       const response = await api.post('api/agreement/', formDataToSend, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      console.log('AgreementForm: Submission successful:', response.data);
       setSuccess(true);
       setForm(initialState);
       resetFileInputs();
+      fetchMyAgreements(); // refresh the list so the new submission appears
     } catch (error) {
       console.error('AgreementForm: Submission error:', error.response ? error.response.data : error.message);
       if (error.response) {
@@ -283,14 +293,42 @@ const AgreementForm = () => {
     navigate('/login');
   };
 
+  const handleDownloadPdf = async (agreement) => {
+    try {
+      setDownloadingPdf(agreement.id);
+      await downloadAuthedFile(
+        `api/agreement/${agreement.id}/pdf/`,
+        `agreement_${agreement.id}_${(agreement.your_name || 'summary').replace(/\s+/g, '_')}.pdf`
+      );
+    } catch (error) {
+      console.error('PDF download failed:', error);
+    } finally {
+      setDownloadingPdf(null);
+    }
+  };
+
+  const statusClass = (status) =>
+    status === 'approved' ? 'status-chip approved' :
+    status === 'rejected' ? 'status-chip rejected' : 'status-chip pending';
+
   if (success) {
     return (
       <div className="form-container">
         <div className="success-message">
           <h2>Thank You!</h2>
           <p>Your agreement has been submitted successfully.</p>
-          <p>We'll contact you shortly.</p>
+          <p>A confirmation email has been sent to you. You can follow its status under "My Submissions" below.</p>
           <div className="success-buttons">
+            <button
+              className="back-to-login-btn"
+              onClick={() => {
+                setSuccess(false);
+                setBackendErrors(null);
+                setSignatureDataURL(null);
+              }}
+            >
+              Submit Another Agreement
+            </button>
             <button className="back-to-login-btn" onClick={handleBackToLogin}>
               Back to Login
             </button>
@@ -629,6 +667,59 @@ const AgreementForm = () => {
             {submitting ? 'Submitting...' : 'Submit'}
           </button>
         </form>
+
+        {/* My Submissions — lets the signer follow the status of every agreement they submitted */}
+        <section className="my-submissions" aria-label="My submissions">
+          <div className="submissions-header">
+            <h2>My Submissions</h2>
+            <button type="button" className="refresh-btn" onClick={fetchMyAgreements} disabled={loadingMine}>
+              {loadingMine ? 'Loading…' : '↻ Refresh'}
+            </button>
+          </div>
+          {!loadingMine && myAgreements.length === 0 && (
+            <p className="submissions-empty">You haven't submitted any agreements yet. Your submissions and their approval status will appear here.</p>
+          )}
+          {myAgreements.length > 0 && (
+            <div className="submissions-table-wrap">
+              <table className="submissions-table">
+                <thead>
+                  <tr>
+                    <th>Agreement</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th>Summary PDF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myAgreements.map((agreement) => (
+                    <tr key={agreement.id}>
+                      <td data-label="Agreement">{agreement.pdf_agreement_name || `Agreement #${agreement.id}`}</td>
+                      <td data-label="Submitted">
+                        {agreement.submited_date ? new Date(agreement.submited_date).toLocaleString() : '—'}
+                      </td>
+                      <td data-label="Status">
+                        <span className={statusClass(agreement.status)}>
+                          {(agreement.status_display || agreement.status || 'pending').toUpperCase()}
+                        </span>
+                      </td>
+                      <td data-label="Summary PDF">
+                        <button
+                          type="button"
+                          className="download-pdf-btn"
+                          onClick={() => handleDownloadPdf(agreement)}
+                          disabled={downloadingPdf === agreement.id}
+                        >
+                          {downloadingPdf === agreement.id ? 'Preparing…' : 'Download PDF'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
         {/* PDF Viewer Modal */}
         {isPdfViewerOpen && (
           <div className="pdf-viewer-overlay">

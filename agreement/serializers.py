@@ -51,6 +51,13 @@ class AgreementSerializer(serializers.ModelSerializer):
         model = Agreement
         fields = '__all__'
         read_only_fields = ['submited_date', 'user', 'pdf_agreement_name']
+        # The model gives these ImageFields a default, which makes DRF treat
+        # them as optional; a signing platform must always receive them.
+        extra_kwargs = {
+            'signature': {'required': True, 'allow_null': False},
+            'profile_photo': {'required': True, 'allow_null': False},
+            'photo_of_userID': {'required': True, 'allow_null': False},
+        }
 
     def validate(self, attrs):
         pdf_agreement = attrs.get('pdf_agreement')

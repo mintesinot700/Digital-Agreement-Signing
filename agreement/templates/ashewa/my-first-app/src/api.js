@@ -1,8 +1,12 @@
 import axios from 'axios';
 import { ACCESS_TOKEN, IS_ADMIN, API_ENDPOINTS } from './constants';
 
-const DEFAULT_API_URL = 'http://127.0.0.1:8000/';
-const baseURL = process.env.REACT_APP_API_URL || DEFAULT_API_URL;
+// API base URL:
+// - Local dev: .env sets REACT_APP_API_URL=http://127.0.0.1:8000
+// - Production build: .env.production leaves it empty -> the SPA calls the API
+//   on its own origin (Django serves both the build and /api/*), so the app
+//   works on any domain without rebuilding.
+const baseURL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
 
 const api = axios.create({
   baseURL,

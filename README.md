@@ -24,7 +24,13 @@ REST Framework** (backend) and **React (Create React App)** (frontend).
   recorded with actor, timestamp and details, visible in the dashboard and
   the Django admin.
 - **Production-ready** — environment-driven settings, WhiteNoise static
-  serving, Gunicorn, Docker & docker-compose deployment.
+  serving, Gunicorn, Docker & docker-compose deployment, plus a one-click
+  Render Blueprint (`render.yaml`).
+- **Test suite** — 45 API tests covering auth, submission, review, PDF
+  generation, audit trail and email notifications.
+- **Signer visibility** — users see every agreement they submitted with its
+  live status and can download the summary PDF from the "My Submissions"
+  panel.
 
 ## Project structure
 
@@ -40,6 +46,7 @@ REST Framework** (backend) and **React (Create React App)** (frontend).
 ├── media/                    # Uploaded files (gitignored)
 ├── Dockerfile                # Multi-stage: React build + Django runtime
 ├── docker-compose.yml        # web + PostgreSQL
+├── render.yaml               # One-click Render Blueprint (web + Postgres)
 └── .env.example              # Environment variable template
 ```
 
@@ -90,9 +97,41 @@ npm start                         # http://localhost:3000 (CORS is pre-configure
 Set `REACT_APP_API_URL=http://127.0.0.1:8000/` in the React app's environment
 if the API runs somewhere else.
 
+## Running the tests
+
+```bash
+python manage.py test
+```
+
+45 tests, no external services required (SQLite + in-memory email backend):
+
+- **Accounts** — registration (incl. duplicate-username rejection),
+  case-insensitive login, refresh-cookie rotation, logout blacklisting,
+  admin verification, user management permissions, password-hash exposure.
+- **agreement** — submission with image validation, ownership-scoped
+  "my agreements", admin review with status filter/search, audit-trail
+  entries for every action, email notifications, summary-PDF download
+  permissions.
+
 ## Production deployment
 
-### Option A — Docker Compose (recommended)
+### Option A — Render (one click)
+
+The repo ships a Render Blueprint (`render.yaml`) that provisions the web
+service (built from the Dockerfile) and a PostgreSQL database:
+
+1. Push this repository to GitHub.
+2. In [Render](https://dashboard.render.com): **New → Blueprint** and select
+   the repository (or run `render blueprint launch` from a clone).
+3. Render builds the image, runs migrations and serves the app on HTTPS.
+4. Create the first admin: open the Render **Shell** tab and run
+   `python manage.py createsuperuser`.
+
+Free-plan notes: uploaded media is ephemeral (see the disk comment in
+`render.yaml`), and the free database expires after 30 days — upgrade to a
+paid plan (or attach a disk + use SQLite) for durable data.
+
+### Option B — Docker Compose (recommended for your own server)
 
 ```bash
 cp .env.example .env
@@ -105,7 +144,7 @@ docker compose exec web python manage.py createsuperuser
 The app is served at `http://<host>:8000` — Django serves both the REST API
 and the built React app, behind Gunicorn + WhiteNoise.
 
-### Option B — any VPS / PaaS (Render, Railway, Fly.io, …)
+### Option C — any VPS / PaaS (Railway, Fly.io, …)
 
 1. Provision PostgreSQL and set `DATABASE_URL=postgres://...`
 2. Set the environment variables from `.env.example`
