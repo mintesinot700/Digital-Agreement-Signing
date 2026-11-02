@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { FaChartBar, FaUsers, FaCog, FaUser, FaSignOutAlt, FaSearch, FaBars, FaTimes, FaPlus, FaEdit, FaTrashAlt, FaFilePdf, FaArrowLeft, FaDownload, FaHistory } from 'react-icons/fa';
+import { FaChartBar, FaUsers, FaCog, FaUser, FaSignOutAlt, FaSearch, FaBars, FaTimes, FaPlus, FaEdit, FaTrashAlt, FaFilePdf, FaArrowLeft, FaDownload, FaHistory, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import api, { downloadAuthedFile } from '../api';
 import '../styles/AdminDashboard.css';
 import '../styles/PdfAgreement.css';
@@ -322,8 +322,11 @@ const AdminDashboard = () => {
         const tabParam = params.get('tab');
         if (tabParam && ['agreements', 'users', 'pdf-agreements', 'pdf-upload', 'audit'].includes(tabParam)) {
             setActiveTab(tabParam);
+        } else if (location.pathname === '/admin/pdf-agreements') {
+            // Direct visits to the dedicated PDF route should open that tab
+            setActiveTab('pdf-agreements');
         }
-    }, [location.search]);
+    }, [location.search, location.pathname]);
 
     useEffect(() => {
         const lowerCaseSearchTerm = agreementSearchTerm.toLowerCase();
@@ -683,6 +686,35 @@ const AdminDashboard = () => {
         </div>
     );
 
+    const renderStatCards = () => {
+        const count = (status) => agreements.filter((ag) => ag.status === status).length;
+        const stats = [
+            { key: '', label: 'Total Agreements', value: agreements.length, icon: FaChartBar, tone: 'primary' },
+            { key: 'pending', label: 'Pending Review', value: count('pending'), icon: FaHistory, tone: 'warn' },
+            { key: 'approved', label: 'Approved', value: count('approved'), icon: FaCheckCircle, tone: 'success' },
+            { key: 'rejected', label: 'Rejected', value: count('rejected'), icon: FaTimesCircle, tone: 'danger' },
+        ];
+        return (
+            <div className="stat-cards">
+                {stats.map((stat) => (
+                    <button
+                        key={stat.label}
+                        type="button"
+                        className={`stat-card tone-${stat.tone} ${statusFilter === stat.key ? 'selected' : ''}`}
+                        onClick={() => { setStatusFilter(stat.key); handleTabClick('agreements'); }}
+                        title={stat.key ? `Filter by ${stat.key}` : 'Show all'}
+                    >
+                        <span className="stat-icon"><stat.icon /></span>
+                        <span className="stat-meta">
+                            <span className="stat-value">{stat.value}</span>
+                            <span className="stat-label">{stat.label}</span>
+                        </span>
+                    </button>
+                ))}
+            </div>
+        );
+    };
+
     const renderAgreementsTable = () => (
         <div className="agreements-table">
             <div className="agreements-header">
@@ -924,7 +956,12 @@ const AdminDashboard = () => {
                         renderAgreementDetail()
                     ) : (
                         <>
-                            {activeTab === 'agreements' && renderAgreementsTable()}
+                            {activeTab === 'agreements' && (
+                                <>
+                                    {renderStatCards()}
+                                    {renderAgreementsTable()}
+                                </>
+                            )}
                             {activeTab === 'users' && renderUsersTable()}
                             {activeTab === 'pdf-agreements' && renderPdfAgreementList()}
                             {activeTab === 'pdf-upload' && renderUploadForm()}

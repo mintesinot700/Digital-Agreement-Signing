@@ -4,9 +4,14 @@ import { ACCESS_TOKEN, IS_ADMIN, API_ENDPOINTS } from './constants';
 // API base URL:
 // - Local dev: .env sets REACT_APP_API_URL=http://127.0.0.1:8000
 // - Production build: .env.production leaves it empty -> the SPA calls the API
-//   on its own origin (Django serves both the build and /api/*), so the app
-//   works on any domain without rebuilding.
-const baseURL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
+//   on its own origin (Django serves both the build and /api/*). The origin
+//   must be ABSOLUTE: endpoint strings are relative ("api/..."), so an empty
+//   baseURL would resolve them against the current route and turn
+//   /admin/dashboard's calls into /admin/api/... which 404s into the SPA.
+const baseURL = (
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'production' ? window.location.origin : 'http://127.0.0.1:8000')
+).replace(/\/+$/, '');
 
 const api = axios.create({
   baseURL,

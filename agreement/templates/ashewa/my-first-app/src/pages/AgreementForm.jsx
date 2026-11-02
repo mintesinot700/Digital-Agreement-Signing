@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  FaFileSignature, FaSignOutAlt, FaFileContract, FaIdCard, FaMapMarkerAlt,
+  FaAddressBook, FaCloudUploadAlt, FaPenNib, FaCheckCircle, FaSyncAlt, FaDownload,
+} from 'react-icons/fa';
 import api, { downloadAuthedFile } from '../api';
 import { ACCESS_TOKEN, API_ENDPOINTS } from '../constants';
 import '../styles/AgreementForm.css';
@@ -313,11 +317,12 @@ const AgreementForm = () => {
 
   if (success) {
     return (
-      <div className="form-container">
+      <div className="form-container success-screen">
         <div className="success-message">
+          <div className="success-icon"><FaCheckCircle /></div>
           <h2>Thank You!</h2>
           <p>Your agreement has been submitted successfully.</p>
-          <p>A confirmation email has been sent to you. You can follow its status under "My Submissions" below.</p>
+          <p>A confirmation email has been sent to you. You can follow its status under "My Submissions".</p>
           <div className="success-buttons">
             <button
               className="back-to-login-btn"
@@ -329,7 +334,7 @@ const AgreementForm = () => {
             >
               Submit Another Agreement
             </button>
-            <button className="back-to-login-btn" onClick={handleBackToLogin}>
+            <button className="btn-secondary" onClick={handleBackToLogin}>
               Back to Login
             </button>
           </div>
@@ -340,14 +345,16 @@ const AgreementForm = () => {
 
   return (
     <>
-      <nav className="navbar" style={{ height: '50px', width: '100vw' }}>
+      <nav className="navbar">
         <div className="navbar-logo">
-          <Link to="/">Digital signature</Link>
+          <FaFileSignature className="navbar-brand-icon" />
+          <Link to="/">SignFlow</Link>
+          <span className="navbar-sub">Digital Agreement Signing</span>
         </div>
         <ul className="navbar-links">
           <li>
             <button onClick={handleLogout} className="logout-btn">
-              Logout
+              <FaSignOutAlt /> Logout
             </button>
           </li>
         </ul>
@@ -418,7 +425,7 @@ const AgreementForm = () => {
           <div className="form-section">
             <div className="form-grid">
               {/* Agreement PDF Selection Section */}
-              <h3>Agreement Paper Selection</h3>
+              <h3 className="section-title"><FaFileContract className="section-icon" /> Agreement Paper Selection</h3>
               <div className="form-row agreement-selector">
                 <label htmlFor="agreement-title">Select an Agreement:</label>
                 <select id="agreement-title" value={selectedAgreement} onChange={handleAgreementSelection}>
@@ -443,7 +450,7 @@ const AgreementForm = () => {
                 )}
               </div>
               {/* Personal Details Section */}
-              <h3>Personal Details</h3>
+              <h3 className="section-title"><FaIdCard className="section-icon" /> Personal Details</h3>
               <div className={`form-row ${errors.your_name ? 'has-error' : ''}`}>
                 <label htmlFor="your_name">Your Name:</label>
                 <input
@@ -521,7 +528,7 @@ const AgreementForm = () => {
                 )}
               </div>
               {/* Location Details Section */}
-              <h3>Location Details</h3>
+              <h3 className="section-title"><FaMapMarkerAlt className="section-icon" /> Location Details</h3>
               <div className={`form-row ${errors.nationality ? 'has-error' : ''}`}>
                 <label htmlFor="nationality">Country:</label>
                 <input
@@ -568,7 +575,7 @@ const AgreementForm = () => {
                 )}
               </div>
               {/* Contact Details Section */}
-              <h3>Contact Details</h3>
+              <h3 className="section-title"><FaAddressBook className="section-icon" /> Contact Details</h3>
               <div className={`form-row ${errors.phone_number ? 'has-error' : ''}`}>
                 <label htmlFor="phone_number">Phone Number:</label>
                 <input
@@ -600,7 +607,7 @@ const AgreementForm = () => {
                 )}
               </div>
               {/* Uploads Section */}
-              <h3>Uploads Files</h3>
+              <h3 className="section-title"><FaCloudUploadAlt className="section-icon" /> Uploads</h3>
               <div className={`form-row file-upload-row ${errors.photo_of_userID ? 'has-error' : ''}`}>
                 <label htmlFor="photo_of_userID">Photo of User ID:</label>
                 <input
@@ -632,9 +639,9 @@ const AgreementForm = () => {
             </div>
           </div>
           <div className="signature-section">
-            <div className="signature-title">SIGNATURE</div>
+            <div className="signature-title"><FaPenNib /> Signature</div>
             <div className="signature-content">
-              <p>Properly insert your signature.</p>
+              <p>Draw your signature inside the box below — use your mouse or finger.</p>
             </div>
             <div className={`signature-area ${errors.signature ? 'has-error' : ''}`}>
               <div className="signature-canvas-container">
@@ -650,6 +657,7 @@ const AgreementForm = () => {
                   onTouchCancel={endDrawing}
                   onTouchMove={draw}
                 ></canvas>
+                {!signatureDataURL && !isDrawing && <div className="signature-hint">Sign here ✍️</div>}
                 <div className="signature-controls">
                   <button type="button" onClick={clearSignature} className="clear-signature-btn">
                     Clear
@@ -662,18 +670,18 @@ const AgreementForm = () => {
               )}
             </div>
           </div>
-          <button className="btn-primary" type="submit" disabled={submitting} aria-busy={submitting}>
+          <button className="btn-primary submit-btn" type="submit" disabled={submitting} aria-busy={submitting}>
             {submitting && <span className="spinner" aria-hidden="true"></span>}
-            {submitting ? 'Submitting...' : 'Submit'}
+            {submitting ? 'Submitting…' : 'Submit agreement'}
           </button>
         </form>
 
         {/* My Submissions — lets the signer follow the status of every agreement they submitted */}
         <section className="my-submissions" aria-label="My submissions">
           <div className="submissions-header">
-            <h2>My Submissions</h2>
+            <h2><FaFileSignature /> My Submissions</h2>
             <button type="button" className="refresh-btn" onClick={fetchMyAgreements} disabled={loadingMine}>
-              {loadingMine ? 'Loading…' : '↻ Refresh'}
+              <FaSyncAlt className={loadingMine ? 'spin' : ''} /> {loadingMine ? 'Loading…' : 'Refresh'}
             </button>
           </div>
           {!loadingMine && myAgreements.length === 0 && (
@@ -709,7 +717,7 @@ const AgreementForm = () => {
                           onClick={() => handleDownloadPdf(agreement)}
                           disabled={downloadingPdf === agreement.id}
                         >
-                          {downloadingPdf === agreement.id ? 'Preparing…' : 'Download PDF'}
+                          <FaDownload /> {downloadingPdf === agreement.id ? 'Preparing…' : 'PDF'}
                         </button>
                       </td>
                     </tr>

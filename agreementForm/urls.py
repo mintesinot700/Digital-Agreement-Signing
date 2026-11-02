@@ -11,7 +11,7 @@ Root URL configuration.
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
-from django.conf.urls.static import static
+from django.views.static import serve as media_serve
 from django.views.generic import TemplateView
 
 urlpatterns = [
@@ -20,8 +20,12 @@ urlpatterns = [
     path('api/', include('agreement.urls')),
 ]
 
-# Uploaded media files
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Uploaded media files. django.conf.urls.static.static() is a no-op when
+# DEBUG=False, which would 404 every uploaded photo/signature in production —
+# serve explicitly in all modes instead (a proxy/CDN can take over later).
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', media_serve, {'document_root': settings.MEDIA_ROOT}),
+]
 
 # React SPA catch-all: any non-API route serves the built index.html so that
 # client-side routes like /admin/dashboard survive a hard refresh.
