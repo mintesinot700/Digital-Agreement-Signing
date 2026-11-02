@@ -291,3 +291,23 @@ class SeedDefaultAdminCommandTest(TestCase):
         boss = UserAccounts.objects.get(username='opsboss')
         self.assertTrue(boss.check_password('EnvPass!999'))
         self.assertFalse(UserAccounts.objects.filter(username='admin').exists())
+
+    def test_env_password_rotates_existing_bootstrap_admin(self):
+        self._run()
+        admin = UserAccounts.objects.get(username='admin')
+        self.assertFalse(admin.check_password('NewPass!777'))
+        with mock.patch.dict(os.environ, {'ADMIN_PASSWORD': 'NewPass!777'}):
+            output = self._run()
+        admin.refresh_from_db()
+        self.assertTrue(admin.check_password('NewPass!777'))
+        self.assertIn('Rotated password', output)
+
+    def test_default_boot_never_rotates_existing_password(self):
+        self._run()
+        admin = UserAccounts.objects.get(username='admin')
+        admin.set_password('UsersOwnChoice!999')
+        admin.save(update_fields=['password'])
+        output = self._run()  # no ADMIN_PASSWORD in the environment
+        admin.refresh_from_db()
+        self.assertTrue(admin.check_password('UsersOwnChoice!999'))
+        self.assertNotIn('Rotated password', output)

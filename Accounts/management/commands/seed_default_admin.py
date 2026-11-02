@@ -40,6 +40,21 @@ class Command(BaseCommand):
         email = (options['email'] or DEFAULT_EMAIL).strip()
 
         if UserAccounts.objects.filter(is_superuser=True).exists():
+            # An ADMIN_PASSWORD set explicitly in the environment is treated
+            # as an operator instruction: rotate the bootstrap admin's
+            # password to match it (only that account, only when the env
+            # var is present — default-password boots never clobber it).
+            env_password = os.environ.get('ADMIN_PASSWORD', '').strip()
+            bootstrap_user = UserAccounts.objects.filter(
+                username__iexact=username, is_superuser=True
+            ).first()
+            if env_password and bootstrap_user and not bootstrap_user.check_password(env_password):
+                bootstrap_user.set_password(env_password)
+                bootstrap_user.save(update_fields=['password'])
+                self.stdout.write(self.style.SUCCESS(
+                    f'Rotated password of bootstrap admin "{bootstrap_user.username}" '
+                    'to match the ADMIN_PASSWORD environment variable.'
+                ))
             self.stdout.write('Superuser already exists — leaving it untouched.')
             return
 
