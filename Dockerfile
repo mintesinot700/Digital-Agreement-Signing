@@ -41,4 +41,4 @@ USER appuser
 EXPOSE 8000
 
 # Migrate then serve with gunicorn
-CMD sh -c "python manage.py migrate --noinput && gunicorn agreementForm.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+CMD sh -c "python manage.py migrate --noinput && python manage.py seed_default_admin && gunicorn agreementForm.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"

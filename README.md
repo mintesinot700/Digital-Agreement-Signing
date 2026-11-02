@@ -166,6 +166,7 @@ and the built React app, behind Gunicorn + WhiteNoise.
 | `EMAIL_BACKEND` | console | Set to `django.core.mail.backends.smtp.EmailBackend` in production |
 | `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` / `EMAIL_USE_TLS` | — | SMTP settings |
 | `DEFAULT_FROM_EMAIL` | no-reply@example.com | Sender for notifications |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_EMAIL` | `admin` / `Admin@12345` / admin@example.com | Bootstrap superuser created on boot **only when the database has no superuser** — change the password in production |
 
 ## Notes
 

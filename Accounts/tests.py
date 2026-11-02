@@ -2,6 +2,10 @@
 API tests for the Accounts app: registration, login (JWT + refresh cookie),
 logout (token blacklisting), admin verification and user management.
 """
+import os
+from io import StringIO
+from unittest import mock
+
 from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -243,3 +247,47 @@ class UserManagementPermissionTest(TestCase):
         self.client.force_authenticate(user=self.staff)
         response = self.client.delete('/api/users/999999/')
         self.assertEqual(response.status_code, 404)
+
+class SeedDefaultAdminCommandTest(TestCase):
+    """The Docker CMD runs seed_default_admin after migrate so a wiped
+    (free-tier) database still gets a usable admin."""
+
+    def _run(self, **kwargs):
+        from django.core.management import call_command
+        out = StringIO()
+        call_command('seed_default_admin', stdout=out, **kwargs)
+        return out.getvalue()
+
+    def test_creates_superuser_on_empty_db(self):
+        output = self._run()
+        admin = UserAccounts.objects.get(username='admin')
+        self.assertTrue(admin.is_staff)
+        self.assertTrue(admin.is_superuser)
+        self.assertTrue(admin.check_password('Admin@12345'))
+        self.assertIn('Bootstrap admin "admin" created', output)
+
+    def test_is_idempotent(self):
+        self._run()
+        self._run()
+        self.assertEqual(UserAccounts.objects.filter(username='admin').count(), 1)
+
+    def test_skips_when_superuser_exists(self):
+        create_user(username='realadmin', is_staff=True, is_superuser=True)
+        output = self._run()
+        self.assertFalse(UserAccounts.objects.filter(username='admin').exists())
+        self.assertIn('already exists', output)
+
+    def test_skips_when_username_taken_without_promoting(self):
+        create_user(username='admin')
+        self._run()
+        admin = UserAccounts.objects.get(username='admin')
+        self.assertFalse(admin.is_superuser)
+        self.assertEqual(UserAccounts.objects.filter(username='admin').count(), 1)
+
+    def test_env_override_sets_credentials(self):
+        with mock.patch.dict(os.environ, {'ADMIN_USERNAME': 'opsboss',
+                                          'ADMIN_PASSWORD': 'EnvPass!999'}):
+            self._run()
+        boss = UserAccounts.objects.get(username='opsboss')
+        self.assertTrue(boss.check_password('EnvPass!999'))
+        self.assertFalse(UserAccounts.objects.filter(username='admin').exists())

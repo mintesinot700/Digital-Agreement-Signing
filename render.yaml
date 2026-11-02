@@ -38,6 +38,13 @@ services:
           property: connectionString
       - key: WEB_CONCURRENCY
         value: "3"
+      # First-run admin for a fresh database (see seed_default_admin).
+      # The free-plan service runs on in-container sqlite, which resets on
+      # every deploy — this guarantees someone can always log in.
+      - key: ADMIN_USERNAME
+        value: "admin"
+      - key: ADMIN_PASSWORD
+        sync: false  # blueprint deploys prompt for it; CHANGE the default
 
 databases:
   - name: das-db
