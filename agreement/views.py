@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
@@ -147,9 +148,21 @@ class Pdf_agreementListView(ListAPIView):
         return {'request': self.request}
 
 
+# Sample agreement bundled with the app. Served whenever a Pdf_agreement row
+# has no usable file behind it (demo rows, or uploads lost on the ephemeral
+# free-tier disk after a deploy/restart).
+SAMPLE_AGREEMENT_PDF = Path(__file__).resolve().parent / 'files' / 'sample_rental_agreement.pdf'
+
+
 def pdf_file_view(request, pk):
     pdf = get_object_or_404(Pdf_agreement, pk=pk)
-    response = FileResponse(pdf.pdf_file.open(), content_type='application/pdf')
+    stored = pdf.pdf_file
+    if not stored or stored.name in ('', 'unknown') or not stored.storage.exists(stored.name):
+        response = FileResponse(SAMPLE_AGREEMENT_PDF.open('rb'), content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="sample_rental_agreement.pdf"'
+        response['X-Frame-Options'] = 'ALLOWALL'  # allows iframe embedding for this response only
+        return response
+    response = FileResponse(stored.open(), content_type='application/pdf')
     response['X-Frame-Options'] = 'ALLOWALL'  # allows iframe embedding for this response only
     return response
 

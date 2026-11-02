@@ -351,3 +351,24 @@ class PdfTemplateAPITest(AgreementTestBase):
         payload = {'type_of_agreement': 'Employment Contract', 'pdf_file': pdf_file('emp.pdf')}
         response = self.client.post('/api/pdf_agreement/create/', payload, format='multipart')
         self.assertEqual(response.status_code, 403)
+
+
+class PdfFileServeAPITest(AgreementTestBase):
+    def test_serves_bundled_sample_when_no_file_attached(self):
+        template = Pdf_agreement.objects.create(type_of_agreement='Rental Agreement (UI Demo)')
+        response = self.client.get(f'/api/pdf/{template.pk}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('sample_rental_agreement.pdf', response['Content-Disposition'])
+        self.assertIn(b'%PDF', b''.join(response.streaming_content))
+
+    def test_serves_uploaded_template_file(self):
+        response = self.client.get(f'/api/pdf/{self.template.pk}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertNotIn('sample_rental_agreement.pdf', response.get('Content-Disposition', ''))
+        self.assertIn(b'%PDF', b''.join(response.streaming_content))
+
+    def test_unknown_template_404(self):
+        response = self.client.get('/api/pdf/99999/')
+        self.assertEqual(response.status_code, 404)
