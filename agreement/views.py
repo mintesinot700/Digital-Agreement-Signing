@@ -154,6 +154,14 @@ class Pdf_agreementListView(ListAPIView):
 SAMPLE_AGREEMENT_PDF = Path(__file__).resolve().parent / 'files' / 'sample_rental_agreement.pdf'
 
 
+def pdf_sample_view(request):
+    """Serve the bundled sample agreement directly — no DB row required."""
+    response = FileResponse(SAMPLE_AGREEMENT_PDF.open('rb'), content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="sample_rental_agreement.pdf"'
+    response['X-Frame-Options'] = 'ALLOWALL'  # allows iframe embedding for this response only
+    return response
+
+
 def pdf_file_view(request, pk):
     pdf = get_object_or_404(Pdf_agreement, pk=pk)
     stored = pdf.pdf_file

@@ -356,6 +356,20 @@ div.error-message {
   font-weight: 500;
 }
 
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
+.empty-state .btn-secondary {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ---------- Tables (shared base) ---------- */
 table {
   width: 100%;

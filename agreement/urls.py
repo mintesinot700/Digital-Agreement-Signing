@@ -6,6 +6,7 @@ from .views import (
     AgreementPDFDownloadView,
     MyAgreementsListView,
     pdf_file_view,
+    pdf_sample_view,
     Pdf_agreementCreateView,
     Pdf_agreementUpdateDestroyView,
     Pdf_agreementListView,
@@ -21,6 +22,7 @@ urlpatterns = [
     path('my-agreements/', MyAgreementsListView.as_view(), name="my-agreements"),
 
     # pdf_agreements (templates)
+    path('pdf/sample/', pdf_sample_view, name='pdf-sample'),
     path('pdf/<int:pk>/', pdf_file_view, name='pdf_file_view'),
     path('pdf_agreement/', Pdf_agreementListView.as_view(), name="pdf-agreement-list"),
     path('pdf_agreement/create/', Pdf_agreementCreateView.as_view(), name="pdf-agreement-create"),

@@ -593,6 +593,12 @@ const AdminDashboard = () => {
                 {isAdmin && (
                     <div className="admin-actions">
                         <button
+                            className="btn-secondary"
+                            onClick={() => handleViewPdf(`${window.location.origin}/api/pdf/sample/`)}
+                        >
+                            <FaFilePdf /> View Sample
+                        </button>
+                        <button
                             className="btn-primary"
                             onClick={() => {
                                 setActiveTab('pdf-upload');
@@ -635,7 +641,15 @@ const AdminDashboard = () => {
                     ))}
                 </ul>
             ) : (
-                <p>No PDF agreements found. Add a new one to get started.</p>
+                <div className="empty-state">
+                    <p>No PDF agreements found. Add a new one to get started.</p>
+                    <button
+                        className="btn-secondary"
+                        onClick={() => handleViewPdf(`${window.location.origin}/api/pdf/sample/`)}
+                    >
+                        <FaFilePdf /> View Sample Agreement
+                    </button>
+                </div>
             )}
         </div>
     );

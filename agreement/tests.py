@@ -354,6 +354,13 @@ class PdfTemplateAPITest(AgreementTestBase):
 
 
 class PdfFileServeAPITest(AgreementTestBase):
+    def test_sample_endpoint_serves_bundled_pdf(self):
+        response = self.client.get('/api/pdf/sample/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('sample_rental_agreement.pdf', response['Content-Disposition'])
+        self.assertIn(b'%PDF', b''.join(response.streaming_content))
+
     def test_serves_bundled_sample_when_no_file_attached(self):
         template = Pdf_agreement.objects.create(type_of_agreement='Rental Agreement (UI Demo)')
         response = self.client.get(f'/api/pdf/{template.pk}/')
