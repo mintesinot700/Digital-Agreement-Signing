@@ -51,9 +51,18 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // Never try to refresh when the failed request WAS the refresh/login call
       const url = originalRequest.url || '';
-      if (url.includes(API_ENDPOINTS.REFRESH) || url.includes(API_ENDPOINTS.LOGIN)) {
+
+      // A failed login must surface its error in the form — redirecting
+      // here reloads the page and wipes the message before it renders.
+      if (url.includes(API_ENDPOINTS.LOGIN)) {
+        return Promise.reject(error);
+      }
+
+      // The refresh call itself failed: the session is truly over.
+      // The refresh token lives in an HttpOnly cookie managed by Django,
+      // so we just clear local state and send the user to the login page.
+      if (url.includes(API_ENDPOINTS.REFRESH)) {
         localStorage.removeItem(ACCESS_TOKEN);
         localStorage.removeItem(IS_ADMIN);
         window.location.href = '/login';

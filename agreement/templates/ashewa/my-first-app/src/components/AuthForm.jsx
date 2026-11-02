@@ -78,18 +78,26 @@ function AuthForm({ route, method, onLogin }) {
         navigate('/login');
       }
     } catch (error) {
-      if (error.response?.data?.detail) {
-        setError(error.response.data.detail);
-      } else if (error.response?.data?.error) {
-        setError(error.response.data.error);
-      } else if (error.response?.data) {
-        let errorMessages = [];
-        for (const key in error.response.data) {
-          errorMessages.push(`${key}: ${error.response.data[key].join(', ')}`);
-        }
-        setError(errorMessages.join('\n'));
+      if (error.code === 'ECONNABORTED') {
+        setError('The server took too long to respond — on the free tier it sleeps and needs a minute to wake up. Please try again.');
+      } else if (!error.response) {
+        setError('Cannot reach the server. Check your connection and try again.');
+      } else if (error.response.status >= 500) {
+        setError(`Server error (${error.response.status}) — please try again in a moment.`);
       } else {
-        setError('An error occurred. Please try again.');
+        const data = error.response.data;
+        if (typeof data?.detail === 'string') {
+          setError(data.detail);
+        } else if (typeof data?.error === 'string') {
+          setError(data.error);
+        } else if (data && typeof data === 'object' && !Array.isArray(data)) {
+          const errorMessages = Object.entries(data).map(
+            ([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : String(value)}`
+          );
+          setError(errorMessages.join('\n') || 'Request failed. Please try again.');
+        } else {
+          setError('An error occurred. Please try again.');
+        }
       }
     } finally {
       setLoading(false);
