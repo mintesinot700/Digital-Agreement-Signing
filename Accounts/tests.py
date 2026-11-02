@@ -311,3 +311,47 @@ class SeedDefaultAdminCommandTest(TestCase):
         admin.refresh_from_db()
         self.assertTrue(admin.check_password('UsersOwnChoice!999'))
         self.assertNotIn('Rotated password', output)
+
+
+class SeedSampleTemplatesTest(TestCase):
+    """Boot on a fresh DB should turn the bundled agreement/files PDFs
+    into Pdf_agreement template rows (the app has nothing to submit
+    against otherwise)."""
+
+    def _run(self, **kwargs):
+        from django.core.management import call_command
+        out = StringIO()
+        call_command('seed_default_admin', stdout=out, **kwargs)
+        return out.getvalue()
+
+    def test_bundled_pdfs_become_templates(self):
+        from agreement.models import Pdf_agreement
+        output = self._run()
+        template = Pdf_agreement.objects.get(type_of_agreement='Sample Rental Agreement')
+        self.assertTrue(template.pdf_file)
+        with template.pdf_file.open('rb') as f:
+            self.assertEqual(f.read(4), b'%PDF')
+        self.assertIn('Seeded sample template', output)
+
+    def test_is_idempotent(self):
+        from agreement.models import Pdf_agreement
+        self._run()
+        self._run()
+        self.assertEqual(
+            Pdf_agreement.objects.filter(type_of_agreement__iexact='Sample Rental Agreement').count(),
+            1,
+        )
+
+    def test_existing_template_not_overwritten(self):
+        from agreement.models import Pdf_agreement
+        Pdf_agreement.objects.create(type_of_agreement='Sample Rental Agreement')
+        self._run()
+        template = Pdf_agreement.objects.get(type_of_agreement__iexact='Sample Rental Agreement')
+        self.assertEqual(template.pdf_file.name, 'unknown')  # untouched
+
+    def test_kill_switch_disables_seeding(self):
+        from agreement.models import Pdf_agreement
+        with mock.patch.dict(os.environ, {'SEED_SAMPLE_TEMPLATES': '0'}):
+            output = self._run()
+        self.assertEqual(Pdf_agreement.objects.count(), 0)
+        self.assertIn('disabled', output)
