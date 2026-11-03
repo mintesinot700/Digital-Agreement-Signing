@@ -35,20 +35,25 @@ REST Framework** (backend) and **React (Create React App)** (frontend).
 ## Project structure
 
 ```
-├── Accounts/                 # Custom user model, auth API (JWT login/refresh/logout)
-├── agreement/                # Agreements, PDF templates, audit log, PDF service
-│   ├── models.py             # Agreement, Pdf_agreement, AuditLog
-│   ├── serializers.py        # DRF serializers (validation)
-│   ├── pdf_service.py        # ReportLab summary-PDF generator
-│   ├── signals.py            # Audit logging + email notifications
-│   └── templates/ashewa/my-first-app/   # React app (CRA)
-├── agreementForm/            # Django project settings/urls
-├── media/                    # Uploaded files (gitignored)
+├── backend/                  # Django project
+│   ├── manage.py
+│   ├── requirements.txt
+│   ├── config/               # Django settings/urls (project package)
+│   ├── accounts/             # Custom user model, auth API (JWT login/refresh/logout)
+│   └── agreement/            # Agreements, PDF templates, audit log, PDF service
+│       ├── models.py         # Agreement, Pdf_agreement, AuditLog
+│       ├── serializers.py    # DRF serializers (validation)
+│       ├── pdf_service.py    # ReportLab summary-PDF generator
+│       ├── signals.py        # Audit logging + email notifications
+│       └── files/            # Bundled sample PDFs (seeded as templates on boot)
+├── frontend/                 # React app (CRA)
 ├── Dockerfile                # Multi-stage: React build + Django runtime
 ├── docker-compose.yml        # web + PostgreSQL
 ├── render.yaml               # One-click Render Blueprint (web + Postgres)
 └── .env.example              # Environment variable template
 ```
+
+Uploaded media lives in `backend/media/` (gitignored).
 
 ## API overview
 
@@ -76,10 +81,11 @@ REST Framework** (backend) and **React (Create React App)** (frontend).
 **Backend**
 
 ```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+cd backend
+python -m venv ../.venv && source ../.venv/bin/activate   # Windows: ..\.venv\Scripts\activate
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py createsuperuser
+python manage.py createsuperuser      # or: python manage.py seed_default_admin
 python manage.py runserver        # http://127.0.0.1:8000
 ```
 
@@ -89,7 +95,7 @@ printed to the console in development.
 **Frontend**
 
 ```bash
-cd agreement/templates/ashewa/my-first-app
+cd frontend
 npm install --legacy-peer-deps
 npm start                         # http://localhost:3000 (CORS is pre-configured)
 ```
@@ -100,12 +106,13 @@ if the API runs somewhere else.
 ## Running the tests
 
 ```bash
+cd backend
 python manage.py test
 ```
 
-45 tests, no external services required (SQLite + in-memory email backend):
+60 tests, no external services required (SQLite + in-memory email backend):
 
-- **Accounts** — registration (incl. duplicate-username rejection),
+- **accounts** — registration (incl. duplicate-username rejection),
   case-insensitive login, refresh-cookie rotation, logout blacklisting,
   admin verification, user management permissions, password-hash exposure.
 - **agreement** — submission with image validation, ownership-scoped
@@ -148,9 +155,9 @@ and the built React app, behind Gunicorn + WhiteNoise.
 
 1. Provision PostgreSQL and set `DATABASE_URL=postgres://...`
 2. Set the environment variables from `.env.example`
-3. Build command: `pip install -r requirements.txt && cd agreement/templates/ashewa/my-first-app && npm install --legacy-peer-deps && npm install ajv@8.17.1 --legacy-peer-deps && npm run build && cd - && python manage.py collectstatic --noinput`
-4. Start command: `gunicorn agreementForm.wsgi:application --bind 0.0.0.0:$PORT`
-5. Migrate once: `python manage.py migrate`
+3. Build command: `pip install -r backend/requirements.txt && cd frontend && npm install --legacy-peer-deps && npm install ajv@8.17.1 --legacy-peer-deps && npm run build && cd ../backend && python manage.py collectstatic --noinput`
+4. Start command: `cd backend && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`
+5. Migrate once: `cd backend && python manage.py migrate`
 
 ### Environment variables (all optional except in production)
 

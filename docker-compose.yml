@@ -8,8 +8,8 @@ services:
     env_file:
       - .env
     volumes:
-      - media_data:/app/media
-      - static_data:/app/staticfiles
+      - media_data:/app/backend/media
+      - static_data:/app/backend/staticfiles
     depends_on:
       db:
         condition: service_healthy

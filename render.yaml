@@ -58,5 +58,5 @@ databases:
 #
 #    disk:
 #      name: media
-#      mountPath: /app/media
+#      mountPath: /app/backend/media
 #      sizeGB: 1
